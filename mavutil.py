@@ -91,7 +91,7 @@ class mavfile(object):
             if len(s) == 0 and len(self.mav.buf) == 0:
                 return None
             if self.logfile_raw:
-                self.logfile_raw.write(s)
+                self.logfile_raw.write(str(s))
             msg = self.mav.parse_char(s)
             if msg:
                 self.post_message(msg)
@@ -433,11 +433,12 @@ def mode_string(mode, nav_mode):
         (MAV_MODE_AUTO,   MAV_NAV_LOITER)    : "LOITER",
         (MAV_MODE_AUTO,   MAV_NAV_LIFTOFF)   : "TAKEOFF",
         (MAV_MODE_AUTO,   MAV_NAV_LANDING)   : "LANDING",
-        (100,             MAV_NAV_VECTOR)    : "STABILIZE",
-        (102,             MAV_NAV_VECTOR)    : "SIMPLE",
-        (101,             MAV_NAV_VECTOR)    : "ACRO",
-        (103,             MAV_NAV_VECTOR)    : "ALT_HOLD",
         (MAV_MODE_AUTO,   MAV_NAV_HOLD)      : "LOITER",
+        (MAV_MODE_GUIDED, MAV_NAV_VECTOR)    : "GUIDED",
+        (100,             MAV_NAV_VECTOR)    : "STABILIZE",
+        (101,             MAV_NAV_VECTOR)    : "ACRO",
+        (102,             MAV_NAV_VECTOR)    : "ALT_HOLD",
+        (107,             MAV_NAV_VECTOR)    : "CIRCLE",
         }
     if cmode in mapping:
         return mapping[cmode]
