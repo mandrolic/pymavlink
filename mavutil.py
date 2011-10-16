@@ -293,6 +293,35 @@ class mavlogfile(mavfile):
             self.f.read(1) # trailing newline
         self.timestamp = msg._timestamp
 
+class mavchildexec(mavfile):
+    '''a MAVLink child processes reader/writer'''
+    def __init__(self, filename, source_system=255):
+        from subprocess import Popen, PIPE
+        import fcntl
+        
+        self.filename = filename
+        self.child = Popen(filename, shell=True, stdout=PIPE, stdin=PIPE)
+        self.fd = self.child.stdout.fileno()
+
+        fl = fcntl.fcntl(self.fd, fcntl.F_GETFL)
+        fcntl.fcntl(self.fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+        fl = fcntl.fcntl(self.child.stdout.fileno(), fcntl.F_GETFL)
+        fcntl.fcntl(self.child.stdout.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+        mavfile.__init__(self, self.fd, filename, source_system=source_system)
+
+    def recv(self):
+        try:
+            x = self.child.stdout.read(1)
+        except Exception:
+            return ''
+        return x
+
+    def write(self, buf):
+        self.child.stdin.write(buf)
+
+
 def mavlink_connection(device, baud=115200, source_system=255,
                        planner_format=None, write=False, append=False,
                        robust_parsing=True, notimestamps=False, input=True):
@@ -300,9 +329,12 @@ def mavlink_connection(device, baud=115200, source_system=255,
     if device.find(':') != -1:
         return mavudp(device, source_system=source_system, input=input)
     if os.path.isfile(device):
-        return mavlogfile(device, planner_format=planner_format, write=write,
-                          append=append, robust_parsing=robust_parsing, notimestamps=notimestamps,
-                          source_system=source_system)
+        if device.endswith(".elf"):
+            return mavchildexec(device, source_system=source_system)
+        else:
+            return mavlogfile(device, planner_format=planner_format, write=write,
+                              append=append, robust_parsing=robust_parsing, notimestamps=notimestamps,
+                              source_system=source_system)
     return mavserial(device, baud=baud, source_system=source_system)
 
 class periodic_event(object):
