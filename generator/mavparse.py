@@ -132,7 +132,7 @@ class MAVEnum(object):
         self.name = name
         self.description = description
         self.entry = []
-        self.next_value = 0
+        self.highest_value = 0
         self.linenumber = linenumber
 
 class MAVXML(object):
@@ -196,8 +196,9 @@ class MAVXML(object):
                 if 'value' in attrs:
                     value = int(attrs['value'])
                 else:
-                    value = self.enum[-1].next_value
-                self.enum[-1].next_value = value+1
+                    value = self.enum[-1].highest_value + 1
+                if (value > self.enum[-1].highest_value):
+                    self.enum[-1].highest_value = value
                 self.enum[-1].entry.append(MAVEnumEntry(attrs['name'], value))
             elif in_element == "mavlink.enums.enum.entry.param":
                 check_attrs(attrs, ['index'], 'enum param')
@@ -207,7 +208,8 @@ class MAVXML(object):
             in_element = '.'.join(in_element_list)
             if in_element == "mavlink.enums.enum":
                 # add a ENUM_END
-                self.enum[-1].entry.append(MAVEnumEntry("%s_ENUM_END" % self.enum[-1].name, self.enum[-1].next_value))
+                self.enum[-1].entry.append(MAVEnumEntry("%s_ENUM_END" % self.enum[-1].name,
+                                                        self.enum[-1].highest_value+1))
             in_element_list.pop()
 
         def char_data(data):
@@ -311,18 +313,15 @@ def check_duplicates(xml):
             msgmap[m.id] = '%s (%s:%u)' % (m.name, x.filename, m.linenumber)
         for enum in x.enum:
             for entry in enum.entry:
-                s = "%s.%s" % (enum.name, entry.value)
-                if s in enummap:
-                    print("ERROR: Duplicate enum %s with value %s at %s:%u" % (
-                        s, enummap[s], x.filename, enum.linenumber))
+                s1 = "%s.%s" % (enum.name, entry.name)
+                s2 = "%s.%s" % (enum.name, entry.value)
+                if s1 in enummap or s2 in enummap:
+                    print("ERROR: Duplicate enums %s/%s at %s:%u and %s" % (
+                        s1, entry.value, x.filename, enum.linenumber,
+                        enummap.get(s1) or enummap.get(s2)))
                     return True
-                enummap[s] = entry.value
-                s = "%s.%s" % (enum.name, entry.name)
-                if s in enummap:
-                    print("ERROR: Duplicate enum %s with name %s at %s:%u" % (
-                        s, enummap[s], x.filename, enum.linenumber))
-                    return True
-                enummap[s] = entry.name
+                enummap[s1] = "%s:%u" % (x.filename, enum.linenumber)
+                enummap[s2] = "%s:%u" % (x.filename, enum.linenumber)
                     
     return False
 
