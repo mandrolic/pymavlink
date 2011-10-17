@@ -236,6 +236,35 @@ class mavudp(mavfile):
         return msg
 
 
+class mavtcp(mavfile):
+    '''a TCP mavlink socket'''
+    def __init__(self, device, source_system=255):
+        a = device.split(':')
+        if len(a) != 2:
+            print("TCP ports must be specified as host:port")
+            sys.exit(1)
+        self.port = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.destination_addr = (a[0], int(a[1]))
+        self.port.connect(self.destination_addr)
+        self.port.setblocking(0)
+        mavfile.__init__(self, self.port.fileno(), device, source_system=source_system)
+
+    def recv(self):
+        try:
+            data = self.port.recv(300)
+        except socket.error as e:
+            if e.errno == 11:
+                return ""
+            raise
+        return data
+
+    def write(self, buf):
+        try:
+            self.port.send(buf)
+        except socket.error:
+            pass
+
+
 class mavlogfile(mavfile):
     '''a MAVLink logfile reader/writer'''
     def __init__(self, filename, planner_format=None,
@@ -326,6 +355,10 @@ def mavlink_connection(device, baud=115200, source_system=255,
                        planner_format=None, write=False, append=False,
                        robust_parsing=True, notimestamps=False, input=True):
     '''make a serial or UDP mavlink connection'''
+    if device.startswith('tcp:'):
+        return mavtcp(device[4:], source_system=source_system)
+    if device.startswith('udp:'):
+        return mavudp(device[4:], input=input, source_system=source_system)
     if device.find(':') != -1:
         return mavudp(device, source_system=source_system, input=input)
     if os.path.isfile(device):
