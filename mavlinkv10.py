@@ -90,8 +90,8 @@ MAV_AUTOPILOT_PIXHAWK = 1 # PIXHAWK autopilot, http://pixhawk.ethz.ch
 MAV_AUTOPILOT_SLUGS = 2 # SLUGS autopilot, http://slugsuav.soe.ucsc.edu
 MAV_AUTOPILOT_ARDUPILOTMEGA = 3 # ArduPilotMega / ArduCopter, http://diydrones.com
 MAV_AUTOPILOT_OPENPILOT = 4 # OpenPilot, http://openpilot.org
-MAV_AUTOPILOT_GENERIC_MISSION_MISSIONS_ONLY = 5 # Generic autopilot only supporting simple MISSIONs
-MAV_AUTOPILOT_GENERIC_MISSION_NAVIGATION_ONLY = 6 # Generic autopilot supporting MISSIONs and other simple navigation
+MAV_AUTOPILOT_GENERIC_WAYPOINTS_ONLY = 5 # Generic autopilot only supporting simple waypoints
+MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY = 6 # Generic autopilot supporting waypoints and other simple navigation
                         # commands
 MAV_AUTOPILOT_GENERIC_MISSION_FULL = 7 # Generic autopilot supporting the full mission command set
 MAV_AUTOPILOT_INVALID = 8 # No valid autopilot, e.g. a GCS or other MAVLink component
@@ -118,7 +118,7 @@ MAV_MODE_FLAG_TEST_ENABLED = 2 # 0b00000010 system has a test mode enabled. This
                         # temporary system tests and should not be
                         # used for stable implementations.
 MAV_MODE_FLAG_RESERVED_ENABLED = 1 # 0b00000001 Reserved for future use.
-MAV_MODE_FLAG_ENUM_END = 2 # 
+MAV_MODE_FLAG_ENUM_END = 129 # 
 
 # MAV_MODE_FLAG_DECODE_POSITION
 MAV_MODE_FLAG_DECODE_POSITION_SAFETY = 128 # First bit:  10000000
@@ -129,7 +129,14 @@ MAV_MODE_FLAG_DECODE_POSITION_GUIDED = 8 # Fifth bit:  00001000
 MAV_MODE_FLAG_DECODE_POSITION_AUTO = 4 # Sixt bit:   00000100
 MAV_MODE_FLAG_DECODE_POSITION_TEST = 2 # Seventh bit: 00000010
 MAV_MODE_FLAG_DECODE_POSITION_RESERVED = 1 # Eighth bit: 00000001
-MAV_MODE_FLAG_DECODE_POSITION_ENUM_END = 2 # 
+MAV_MODE_FLAG_DECODE_POSITION_ENUM_END = 129 # 
+
+# MAV_GOTO
+MAV_GOTO_DO_HOLD = 0 # Hold at the current position.
+MAV_GOTO_DO_CONTINUE = 1 # Continue with the mission execution.
+MAV_GOTO_HOLD_AT_CURRENT_POSITION = 2 # Hold at the current position of the system
+MAV_GOTO_HOLD_AT_SPECIFIED_POSITION = 3 # Hold at the position specified in the parameters of the DO_HOLD action
+MAV_GOTO_ENUM_END = 4 # 
 
 # MAV_MODE
 MAV_MODE_PREFLIGHT = 0 # System is not ready to fly, booting, calibrating, etc. No flag is set.
@@ -153,7 +160,7 @@ MAV_MODE_TEST_DISARMED = 66 # UNDEFINED mode. This solely depends on the autopil
                         # caution, intended for developers only.
 MAV_MODE_TEST_ARMED = 194 # UNDEFINED mode. This solely depends on the autopilot - use with
                         # caution, intended for developers only.
-MAV_MODE_ENUM_END = 195 # 
+MAV_MODE_ENUM_END = 221 # 
 
 # MAV_STATE
 MAV_STATE_UNINIT = 0 # Uninitialized system, state is unknown.
@@ -189,6 +196,7 @@ MAV_TYPE_FLAPPING_WING = 16 # Flapping wing
 MAV_TYPE_ENUM_END = 17 # 
 
 # MAV_COMPONENT
+MAV_COMP_ID_ALL = 0 # 
 MAV_COMP_ID_GPS = 220 # 
 MAV_COMP_ID_MISSIONPLANNER = 190 # 
 MAV_COMP_ID_PATHPLANNER = 195 # 
@@ -214,7 +222,7 @@ MAV_COMP_ID_SERVO11 = 150 #
 MAV_COMP_ID_SERVO12 = 151 # 
 MAV_COMP_ID_SERVO13 = 152 # 
 MAV_COMP_ID_SERVO14 = 153 # 
-MAV_COMPONENT_ENUM_END = 154 # 
+MAV_COMPONENT_ENUM_END = 251 # 
 
 # MAV_FRAME
 MAV_FRAME_GLOBAL = 0 # Global coordinate frame, WGS84 coordinate system. First value / x:
@@ -233,16 +241,16 @@ MAV_FRAME_LOCAL_ENU = 4 # Local coordinate frame, Z-down (x: east, y: north, z: 
 MAV_FRAME_ENUM_END = 5 # 
 
 # MAVLINK_DATA_STREAM_TYPE
-MAVLINK_DATA_STREAM_IMG_JPEG = 0 # 
-MAVLINK_DATA_STREAM_IMG_BMP = 1 # 
-MAVLINK_DATA_STREAM_IMG_RAW8U = 2 # 
-MAVLINK_DATA_STREAM_IMG_RAW32U = 3 # 
-MAVLINK_DATA_STREAM_IMG_PGM = 4 # 
-MAVLINK_DATA_STREAM_IMG_PNG = 5 # 
-MAVLINK_DATA_STREAM_TYPE_ENUM_END = 6 # 
+MAVLINK_DATA_STREAM_IMG_JPEG = 1 # 
+MAVLINK_DATA_STREAM_IMG_BMP = 2 # 
+MAVLINK_DATA_STREAM_IMG_RAW8U = 3 # 
+MAVLINK_DATA_STREAM_IMG_RAW32U = 4 # 
+MAVLINK_DATA_STREAM_IMG_PGM = 5 # 
+MAVLINK_DATA_STREAM_IMG_PNG = 6 # 
+MAVLINK_DATA_STREAM_TYPE_ENUM_END = 7 # 
 
 # MAV_CMD
-MAV_CMD_NAV_MISSION = 16 # Navigate to MISSION.
+MAV_CMD_NAV_WAYPOINT = 16 # Navigate to MISSION.
 MAV_CMD_NAV_LOITER_UNLIM = 17 # Loiter around this MISSION an unlimited amount of time
 MAV_CMD_NAV_LOITER_TURNS = 18 # Loiter around this MISSION for X turns
 MAV_CMD_NAV_LOITER_TIME = 19 # Loiter around this MISSION for X seconds
@@ -290,7 +298,9 @@ MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS = 242 # Set sensor offsets. This command wi
                         # flight mode.
 MAV_CMD_PREFLIGHT_STORAGE = 245 # Request storage of different parameter values and logs. This command
                         # will be only accepted if in pre-flight mode.
-MAV_CMD_ENUM_END = 246 # 
+MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN = 246 # Request the reboot or shutdown of system components.
+MAV_CMD_OVERRIDE_GOTO = 252 # Hold / continue the current action
+MAV_CMD_ENUM_END = 253 # 
 
 # MAV_DATA_STREAM
 MAV_DATA_STREAM_ALL = 0 # Enable all data streams
@@ -314,22 +324,22 @@ MAV_ROI_TARGET = 4 # Point toward of given id.
 MAV_ROI_ENUM_END = 5 # 
 
 # MAV_CMD_ACK
-MAV_CMD_ACK_OK = 0 # Command / mission item is ok.
-MAV_CMD_ACK_ERR_FAIL = 1 # Generic error message if none of the other reasons fails or if no
+MAV_CMD_ACK_OK = 1 # Command / mission item is ok.
+MAV_CMD_ACK_ERR_FAIL = 2 # Generic error message if none of the other reasons fails or if no
                         # detailed error reporting is implemented.
-MAV_CMD_ACK_ERR_ACCESS_DENIED = 2 # The system is refusing to accept this command from this source /
+MAV_CMD_ACK_ERR_ACCESS_DENIED = 3 # The system is refusing to accept this command from this source /
                         # communication partner.
-MAV_CMD_ACK_ERR_NOT_SUPPORTED = 3 # Command or mission item is not supported, other commands would be
+MAV_CMD_ACK_ERR_NOT_SUPPORTED = 4 # Command or mission item is not supported, other commands would be
                         # accepted.
-MAV_CMD_ACK_ERR_COORDINATE_FRAME_NOT_SUPPORTED = 4 # The coordinate frame of this command / mission item is not supported.
-MAV_CMD_ACK_ERR_COORDINATES_OUT_OF_RANGE = 5 # The coordinate frame of this command is ok, but he coordinate values
+MAV_CMD_ACK_ERR_COORDINATE_FRAME_NOT_SUPPORTED = 5 # The coordinate frame of this command / mission item is not supported.
+MAV_CMD_ACK_ERR_COORDINATES_OUT_OF_RANGE = 6 # The coordinate frame of this command is ok, but he coordinate values
                         # exceed the safety limits of this system.
                         # This is a generic error, please use the more
                         # specific error messages below if possible.
-MAV_CMD_ACK_ERR_X_LAT_OUT_OF_RANGE = 6 # The X or latitude value is out of range.
-MAV_CMD_ACK_ERR_Y_LON_OUT_OF_RANGE = 7 # The Y or longitude value is out of range.
-MAV_CMD_ACK_ERR_Z_ALT_OUT_OF_RANGE = 8 # The Z or altitude value is out of range.
-MAV_CMD_ACK_ENUM_END = 9 # 
+MAV_CMD_ACK_ERR_X_LAT_OUT_OF_RANGE = 7 # The X or latitude value is out of range.
+MAV_CMD_ACK_ERR_Y_LON_OUT_OF_RANGE = 8 # The Y or longitude value is out of range.
+MAV_CMD_ACK_ERR_Z_ALT_OUT_OF_RANGE = 9 # The Z or altitude value is out of range.
+MAV_CMD_ACK_ENUM_END = 10 # 
 
 # message IDs
 MAVLINK_MSG_ID_BAD_DATA = -1
@@ -397,6 +407,10 @@ MAVLINK_MSG_ID_HIL_STATE = 90
 MAVLINK_MSG_ID_HIL_CONTROLS = 91
 MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW = 92
 MAVLINK_MSG_ID_OPTICAL_FLOW = 100
+MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE = 101
+MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE = 102
+MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE = 103
+MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE = 104
 MAVLINK_MSG_ID_MEMORY_VECT = 249
 MAVLINK_MSG_ID_DEBUG_VECT = 250
 MAVLINK_MSG_ID_NAMED_VALUE_FLOAT = 251
@@ -1540,7 +1554,7 @@ class MAVLink_command_ack_message(MAVLink_message):
                 self.result = result
 
         def pack(self, mav):
-                return MAVLink_message.pack(self, mav, 8, struct.pack('<ff', self.command, self.result))
+                return MAVLink_message.pack(self, mav, 143, struct.pack('<HB', self.command, self.result))
 
 class MAVLink_hil_state_message(MAVLink_message):
         '''
@@ -1638,6 +1652,75 @@ class MAVLink_optical_flow_message(MAVLink_message):
 
         def pack(self, mav):
                 return MAVLink_message.pack(self, mav, 19, struct.pack('<QfhhBB', self.time_usec, self.ground_distance, self.flow_x, self.flow_y, self.sensor_id, self.quality))
+
+class MAVLink_global_vision_position_estimate_message(MAVLink_message):
+        '''
+
+        '''
+        def __init__(self, usec, x, y, z, roll, pitch, yaw):
+                MAVLink_message.__init__(self, MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE, 'GLOBAL_VISION_POSITION_ESTIMATE')
+                self._fieldnames = ['usec', 'x', 'y', 'z', 'roll', 'pitch', 'yaw']
+                self.usec = usec
+                self.x = x
+                self.y = y
+                self.z = z
+                self.roll = roll
+                self.pitch = pitch
+                self.yaw = yaw
+
+        def pack(self, mav):
+                return MAVLink_message.pack(self, mav, 102, struct.pack('<Qffffff', self.usec, self.x, self.y, self.z, self.roll, self.pitch, self.yaw))
+
+class MAVLink_vision_position_estimate_message(MAVLink_message):
+        '''
+
+        '''
+        def __init__(self, usec, x, y, z, roll, pitch, yaw):
+                MAVLink_message.__init__(self, MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE, 'VISION_POSITION_ESTIMATE')
+                self._fieldnames = ['usec', 'x', 'y', 'z', 'roll', 'pitch', 'yaw']
+                self.usec = usec
+                self.x = x
+                self.y = y
+                self.z = z
+                self.roll = roll
+                self.pitch = pitch
+                self.yaw = yaw
+
+        def pack(self, mav):
+                return MAVLink_message.pack(self, mav, 158, struct.pack('<Qffffff', self.usec, self.x, self.y, self.z, self.roll, self.pitch, self.yaw))
+
+class MAVLink_vision_speed_estimate_message(MAVLink_message):
+        '''
+
+        '''
+        def __init__(self, usec, x, y, z):
+                MAVLink_message.__init__(self, MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE, 'VISION_SPEED_ESTIMATE')
+                self._fieldnames = ['usec', 'x', 'y', 'z']
+                self.usec = usec
+                self.x = x
+                self.y = y
+                self.z = z
+
+        def pack(self, mav):
+                return MAVLink_message.pack(self, mav, 208, struct.pack('<Qfff', self.usec, self.x, self.y, self.z))
+
+class MAVLink_vicon_position_estimate_message(MAVLink_message):
+        '''
+
+        '''
+        def __init__(self, usec, x, y, z, roll, pitch, yaw):
+                MAVLink_message.__init__(self, MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE, 'VICON_POSITION_ESTIMATE')
+                self._fieldnames = ['usec', 'x', 'y', 'z', 'roll', 'pitch', 'yaw']
+                self.usec = usec
+                self.x = x
+                self.y = y
+                self.z = z
+                self.roll = roll
+                self.pitch = pitch
+                self.yaw = yaw
+
+        def pack(self, mav):
+                return MAVLink_message.pack(self, mav, 56, struct.pack('<Qffffff', self.usec, self.x, self.y, self.z, self.roll, self.pitch, self.yaw))
 
 class MAVLink_memory_vect_message(MAVLink_message):
         '''
@@ -1813,11 +1896,15 @@ mavlink_map = {
         MAVLINK_MSG_ID_VFR_HUD : ( '<ffffhH', MAVLink_vfr_hud_message, [0, 1, 4, 5, 2, 3], 20 ),
         MAVLINK_MSG_ID_COMMAND_SHORT : ( '<ffffBBBB', MAVLink_command_short_message, [4, 5, 6, 7, 0, 1, 2, 3], 160 ),
         MAVLINK_MSG_ID_COMMAND_LONG : ( '<fffffffBBBB', MAVLink_command_long_message, [7, 8, 9, 10, 0, 1, 2, 3, 4, 5, 6], 168 ),
-        MAVLINK_MSG_ID_COMMAND_ACK : ( '<ff', MAVLink_command_ack_message, [0, 1], 8 ),
+        MAVLINK_MSG_ID_COMMAND_ACK : ( '<HB', MAVLink_command_ack_message, [0, 1], 143 ),
         MAVLINK_MSG_ID_HIL_STATE : ( '<Qffffffiiihhhhhh', MAVLink_hil_state_message, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 183 ),
         MAVLINK_MSG_ID_HIL_CONTROLS : ( '<QffffffffBB', MAVLink_hil_controls_message, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 63 ),
         MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW : ( '<QHHHHHHHHHHHHB', MAVLink_hil_rc_inputs_raw_message, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 54 ),
         MAVLINK_MSG_ID_OPTICAL_FLOW : ( '<QfhhBB', MAVLink_optical_flow_message, [0, 4, 2, 3, 5, 1], 19 ),
+        MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE : ( '<Qffffff', MAVLink_global_vision_position_estimate_message, [0, 1, 2, 3, 4, 5, 6], 102 ),
+        MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE : ( '<Qffffff', MAVLink_vision_position_estimate_message, [0, 1, 2, 3, 4, 5, 6], 158 ),
+        MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE : ( '<Qfff', MAVLink_vision_speed_estimate_message, [0, 1, 2, 3], 208 ),
+        MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE : ( '<Qffffff', MAVLink_vicon_position_estimate_message, [0, 1, 2, 3, 4, 5, 6], 56 ),
         MAVLINK_MSG_ID_MEMORY_VECT : ( '<HBB32s', MAVLink_memory_vect_message, [0, 1, 2, 3], 204 ),
         MAVLINK_MSG_ID_DEBUG_VECT : ( '<Qfff10s', MAVLink_debug_vect_message, [4, 0, 1, 2, 3], 49 ),
         MAVLINK_MSG_ID_NAMED_VALUE_FLOAT : ( '<If10s', MAVLink_named_value_float_message, [0, 2, 1], 170 ),
@@ -4040,8 +4127,8 @@ class MAVLink(object):
                 Report status of a command. Includes feedback wether the command was
                 executed
 
-                command                   : Current airspeed in m/s (float)
-                result                    : 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION (float)
+                command                   : Command ID, as defined by MAV_CMD enum. (uint16_t)
+                result                    : 1: Command ACCEPTED and EXECUTED, 1: Command TEMPORARY REJECTED/DENIED, 2: Command PERMANENTLY DENIED, 3: Command UNKNOWN/UNSUPPORTED, 4: Command executed, but failed (uint8_t)
 
                 '''
                 msg = MAVLink_command_ack_message(command, result)
@@ -4053,8 +4140,8 @@ class MAVLink(object):
                 Report status of a command. Includes feedback wether the command was
                 executed
 
-                command                   : Current airspeed in m/s (float)
-                result                    : 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION (float)
+                command                   : Command ID, as defined by MAV_CMD enum. (uint16_t)
+                result                    : 1: Command ACCEPTED and EXECUTED, 1: Command TEMPORARY REJECTED/DENIED, 2: Command PERMANENTLY DENIED, 3: Command UNKNOWN/UNSUPPORTED, 4: Command executed, but failed (uint8_t)
 
                 '''
                 return self.send(self.command_ack_encode(command, result))
@@ -4238,6 +4325,128 @@ class MAVLink(object):
 
                 '''
                 return self.send(self.optical_flow_encode(time_usec, sensor_id, flow_x, flow_y, quality, ground_distance))
+            
+        def global_vision_position_estimate_encode(self, usec, x, y, z, roll, pitch, yaw):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X position (float)
+                y                         : Global Y position (float)
+                z                         : Global Z position (float)
+                roll                      : Roll angle in rad (float)
+                pitch                     : Pitch angle in rad (float)
+                yaw                       : Yaw angle in rad (float)
+
+                '''
+                msg = MAVLink_global_vision_position_estimate_message(usec, x, y, z, roll, pitch, yaw)
+                msg.pack(self)
+                return msg
+            
+        def global_vision_position_estimate_send(self, usec, x, y, z, roll, pitch, yaw):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X position (float)
+                y                         : Global Y position (float)
+                z                         : Global Z position (float)
+                roll                      : Roll angle in rad (float)
+                pitch                     : Pitch angle in rad (float)
+                yaw                       : Yaw angle in rad (float)
+
+                '''
+                return self.send(self.global_vision_position_estimate_encode(usec, x, y, z, roll, pitch, yaw))
+            
+        def vision_position_estimate_encode(self, usec, x, y, z, roll, pitch, yaw):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X position (float)
+                y                         : Global Y position (float)
+                z                         : Global Z position (float)
+                roll                      : Roll angle in rad (float)
+                pitch                     : Pitch angle in rad (float)
+                yaw                       : Yaw angle in rad (float)
+
+                '''
+                msg = MAVLink_vision_position_estimate_message(usec, x, y, z, roll, pitch, yaw)
+                msg.pack(self)
+                return msg
+            
+        def vision_position_estimate_send(self, usec, x, y, z, roll, pitch, yaw):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X position (float)
+                y                         : Global Y position (float)
+                z                         : Global Z position (float)
+                roll                      : Roll angle in rad (float)
+                pitch                     : Pitch angle in rad (float)
+                yaw                       : Yaw angle in rad (float)
+
+                '''
+                return self.send(self.vision_position_estimate_encode(usec, x, y, z, roll, pitch, yaw))
+            
+        def vision_speed_estimate_encode(self, usec, x, y, z):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X speed (float)
+                y                         : Global Y speed (float)
+                z                         : Global Z speed (float)
+
+                '''
+                msg = MAVLink_vision_speed_estimate_message(usec, x, y, z)
+                msg.pack(self)
+                return msg
+            
+        def vision_speed_estimate_send(self, usec, x, y, z):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X speed (float)
+                y                         : Global Y speed (float)
+                z                         : Global Z speed (float)
+
+                '''
+                return self.send(self.vision_speed_estimate_encode(usec, x, y, z))
+            
+        def vicon_position_estimate_encode(self, usec, x, y, z, roll, pitch, yaw):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X position (float)
+                y                         : Global Y position (float)
+                z                         : Global Z position (float)
+                roll                      : Roll angle in rad (float)
+                pitch                     : Pitch angle in rad (float)
+                yaw                       : Yaw angle in rad (float)
+
+                '''
+                msg = MAVLink_vicon_position_estimate_message(usec, x, y, z, roll, pitch, yaw)
+                msg.pack(self)
+                return msg
+            
+        def vicon_position_estimate_send(self, usec, x, y, z, roll, pitch, yaw):
+                '''
+                
+
+                usec                      : Timestamp (milliseconds) (uint64_t)
+                x                         : Global X position (float)
+                y                         : Global Y position (float)
+                z                         : Global Z position (float)
+                roll                      : Roll angle in rad (float)
+                pitch                     : Pitch angle in rad (float)
+                yaw                       : Yaw angle in rad (float)
+
+                '''
+                return self.send(self.vicon_position_estimate_encode(usec, x, y, z, roll, pitch, yaw))
             
         def memory_vect_encode(self, address, ver, type, value):
                 '''
