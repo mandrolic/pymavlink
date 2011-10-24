@@ -774,6 +774,26 @@
                     <description>32 bit signed integer</description>
                </entry>
 	  </enum>
+
+          <enum name="MAV_RESULT">
+               <description>result from a mavlink command</description>
+               <entry name="MAV_RESULT_ACCEPTED">
+                    <description>Command ACCEPTED and EXECUTED</description>
+               </entry>
+               <entry name="MAV_RESULT_TEMPORARILY_REJECTED">
+                    <description>Command TEMPORARY REJECTED/DENIED</description>
+               </entry>
+               <entry name="MAV_RESULT_DENIED">
+                    <description>Command PERMANENTLY DENIED</description>
+               </entry>
+               <entry name="MAV_RESULT_UNSUPPORTED">
+                    <description>Command UNKNOWN/UNSUPPORTED</description>
+               </entry>
+               <entry name="MAV_RESULT_FAILED">
+                    <description>Command executed, but failed</description>
+               </entry>
+	  </enum>
+
      </enums>
      <messages>
           <message id="0" name="HEARTBEAT">
@@ -1277,7 +1297,7 @@
           <message id="77" name="COMMAND_ACK">
                <description>Report status of a command. Includes feedback wether the command was executed</description>
                <field type="uint16_t" name="command">Command ID, as defined by MAV_CMD enum.</field>
-               <field type="uint8_t" name="result">1: Command ACCEPTED and EXECUTED, 1: Command TEMPORARY REJECTED/DENIED, 2: Command PERMANENTLY DENIED, 3: Command UNKNOWN/UNSUPPORTED, 4: Command executed, but failed</field>
+               <field type="uint8_t" name="result">See MAV_RESULT enum</field>
           </message>
           
           <!--
