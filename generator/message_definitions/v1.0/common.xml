@@ -748,7 +748,32 @@
                <entry name="MAV_CMD_ACK_ERR_Z_ALT_OUT_OF_RANGE">
                     <description>The Z or altitude value is out of range.</description>
                </entry>
-        </enum>
+          </enum>
+
+          <enum name="MAV_VAR">
+               <description>type of a mavlink parameter</description>
+               <entry name="MAV_VAR_FLOAT">
+                    <description>32 bit float</description>
+               </entry>
+               <entry name="MAV_VAR_UINT8">
+                    <description>8 bit unsigned integer</description>
+               </entry>
+               <entry name="MAV_VAR_INT8">
+                    <description>8 bit signed integer</description>
+               </entry>
+               <entry name="MAV_VAR_UINT16">
+                    <description>16 bit unsigned integer</description>
+               </entry>
+               <entry name="MAV_VAR_INT16">
+                    <description>16 bit signed integer</description>
+               </entry>
+               <entry name="MAV_VAR_UINT32">
+                    <description>32 bit unsigned integer</description>
+               </entry>
+               <entry name="MAV_VAR_INT32">
+                    <description>32 bit signed integer</description>
+               </entry>
+	  </enum>
      </enums>
      <messages>
           <message id="0" name="HEARTBEAT">
@@ -829,7 +854,7 @@
                <description>Emit the value of a onboard parameter. The inclusion of param_count and param_index in the message allows the recipient to keep track of received parameters and allows him to re-request missing parameters after a loss or timeout.</description>
                <field type="char[16]" name="param_id">Onboard parameter id</field>
                <field type="float" name="param_value">Onboard parameter value</field>
-               <field type="uint8_t" name="param_type">Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t</field>
+               <field type="uint8_t" name="param_type">Onboard parameter type: see MAV_VAR enum</field>
                <field type="uint16_t" name="param_count">Total number of onboard parameters</field>
                <field type="uint16_t" name="param_index">Index of this onboard parameter</field>
           </message>
@@ -839,7 +864,7 @@
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="char[16]" name="param_id">Onboard parameter id</field>
                <field type="float" name="param_value">Onboard parameter value</field>
-               <field type="uint8_t" name="param_type">Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t</field>
+               <field type="uint8_t" name="param_type">Onboard parameter type: see MAV_VAR enum</field>
           </message>
           <message id="24" name="GPS_RAW_INT">
                <description>The global position, as returned by the Global Positioning System (GPS). This is
