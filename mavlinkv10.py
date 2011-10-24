@@ -341,6 +341,42 @@ MAV_CMD_ACK_ERR_Y_LON_OUT_OF_RANGE = 8 # The Y or longitude value is out of rang
 MAV_CMD_ACK_ERR_Z_ALT_OUT_OF_RANGE = 9 # The Z or altitude value is out of range.
 MAV_CMD_ACK_ENUM_END = 10 # 
 
+# MAV_VAR
+MAV_VAR_FLOAT = 0 # 32 bit float
+MAV_VAR_UINT8 = 1 # 8 bit unsigned integer
+MAV_VAR_INT8 = 2 # 8 bit signed integer
+MAV_VAR_UINT16 = 3 # 16 bit unsigned integer
+MAV_VAR_INT16 = 4 # 16 bit signed integer
+MAV_VAR_UINT32 = 5 # 32 bit unsigned integer
+MAV_VAR_INT32 = 6 # 32 bit signed integer
+MAV_VAR_ENUM_END = 7 # 
+
+# MAV_RESULT
+MAV_RESULT_ACCEPTED = 0 # Command ACCEPTED and EXECUTED
+MAV_RESULT_TEMPORARILY_REJECTED = 1 # Command TEMPORARY REJECTED/DENIED
+MAV_RESULT_DENIED = 2 # Command PERMANENTLY DENIED
+MAV_RESULT_UNSUPPORTED = 3 # Command UNKNOWN/UNSUPPORTED
+MAV_RESULT_FAILED = 4 # Command executed, but failed
+MAV_RESULT_ENUM_END = 5 # 
+
+# MAV_MISSION_RESULT
+MAV_MISSION_ACCEPTED = 0 # mission accepted OK
+MAV_MISSION_ERROR = 1 # generic error / not accepting mission commands at all right now
+MAV_MISSION_UNSUPPORTED_FRAME = 2 # coordinate frame is not supported
+MAV_MISSION_UNSUPPORTED = 3 # command is not supported
+MAV_MISSION_NO_SPACE = 4 # mission item exceeds storage space
+MAV_MISSION_INVALID = 5 # one of the parameters has an invalid value
+MAV_MISSION_INVALID_PARAM1 = 6 # param1 has an invalid value
+MAV_MISSION_INVALID_PARAM2 = 7 # param2 has an invalid value
+MAV_MISSION_INVALID_PARAM3 = 8 # param3 has an invalid value
+MAV_MISSION_INVALID_PARAM4 = 9 # param4 has an invalid value
+MAV_MISSION_INVALID_PARAM5_X = 10 # x/param5 has an invalid value
+MAV_MISSION_INVALID_PARAM6_Y = 11 # y/param6 has an invalid value
+MAV_MISSION_INVALID_PARAM7 = 12 # param7 has an invalid value
+MAV_MISSION_INVALID_SEQUENCE = 13 # received waypoint out of sequence
+MAV_MISSION_DENIED = 14 # not accepting any mission commands from this communication partner
+MAV_MISSION_RESULT_ENUM_END = 15 # 
+
 # message IDs
 MAVLINK_MSG_ID_BAD_DATA = -1
 MAVLINK_MSG_ID_SENSOR_OFFSETS = 150
@@ -638,7 +674,7 @@ class MAVLink_set_mode_message(MAVLink_message):
                 self.custom_mode = custom_mode
 
         def pack(self, mav):
-                return MAVLink_message.pack(self, mav, 197, struct.pack('<HBB', self.custom_mode, self.target_system, self.base_mode))
+                return MAVLink_message.pack(self, mav, 89, struct.pack('<IBB', self.custom_mode, self.target_system, self.base_mode))
 
 class MAVLink_param_request_read_message(MAVLink_message):
         '''
@@ -1848,7 +1884,7 @@ mavlink_map = {
         MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL : ( '<BBB25s', MAVLink_change_operator_control_message, [0, 1, 2, 3], 217 ),
         MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK : ( '<BBB', MAVLink_change_operator_control_ack_message, [0, 1, 2], 104 ),
         MAVLINK_MSG_ID_AUTH_KEY : ( '<32s', MAVLink_auth_key_message, [0], 119 ),
-        MAVLINK_MSG_ID_SET_MODE : ( '<HBB', MAVLink_set_mode_message, [1, 2, 0], 197 ),
+        MAVLINK_MSG_ID_SET_MODE : ( '<IBB', MAVLink_set_mode_message, [1, 2, 0], 89 ),
         MAVLINK_MSG_ID_PARAM_REQUEST_READ : ( '<hBB16s', MAVLink_param_request_read_message, [1, 2, 3, 0], 214 ),
         MAVLINK_MSG_ID_PARAM_REQUEST_LIST : ( '<BB', MAVLink_param_request_list_message, [0, 1], 159 ),
         MAVLINK_MSG_ID_PARAM_VALUE : ( '<fHH16sB', MAVLink_param_value_message, [3, 0, 4, 1, 2], 220 ),
@@ -2468,7 +2504,7 @@ class MAVLink(object):
 
                 target_system             : The system setting the mode (uint8_t)
                 base_mode                 : The new base mode (uint8_t)
-                custom_mode               : The new autopilot-specific mode. This field can be ignored by an autopilot. (uint16_t)
+                custom_mode               : The new autopilot-specific mode. This field can be ignored by an autopilot. (uint32_t)
 
                 '''
                 msg = MAVLink_set_mode_message(target_system, base_mode, custom_mode)
@@ -2483,7 +2519,7 @@ class MAVLink(object):
 
                 target_system             : The system setting the mode (uint8_t)
                 base_mode                 : The new base mode (uint8_t)
-                custom_mode               : The new autopilot-specific mode. This field can be ignored by an autopilot. (uint16_t)
+                custom_mode               : The new autopilot-specific mode. This field can be ignored by an autopilot. (uint32_t)
 
                 '''
                 return self.send(self.set_mode_encode(target_system, base_mode, custom_mode))
@@ -2563,7 +2599,7 @@ class MAVLink(object):
 
                 param_id                  : Onboard parameter id (char)
                 param_value               : Onboard parameter value (float)
-                param_type                : Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t (uint8_t)
+                param_type                : Onboard parameter type: see MAV_VAR enum (uint8_t)
                 param_count               : Total number of onboard parameters (uint16_t)
                 param_index               : Index of this onboard parameter (uint16_t)
 
@@ -2581,7 +2617,7 @@ class MAVLink(object):
 
                 param_id                  : Onboard parameter id (char)
                 param_value               : Onboard parameter value (float)
-                param_type                : Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t (uint8_t)
+                param_type                : Onboard parameter type: see MAV_VAR enum (uint8_t)
                 param_count               : Total number of onboard parameters (uint16_t)
                 param_index               : Index of this onboard parameter (uint16_t)
 
@@ -2605,7 +2641,7 @@ class MAVLink(object):
                 target_component          : Component ID (uint8_t)
                 param_id                  : Onboard parameter id (char)
                 param_value               : Onboard parameter value (float)
-                param_type                : Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t (uint8_t)
+                param_type                : Onboard parameter type: see MAV_VAR enum (uint8_t)
 
                 '''
                 msg = MAVLink_param_set_message(target_system, target_component, param_id, param_value, param_type)
@@ -2629,7 +2665,7 @@ class MAVLink(object):
                 target_component          : Component ID (uint8_t)
                 param_id                  : Onboard parameter id (char)
                 param_value               : Onboard parameter value (float)
-                param_type                : Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t (uint8_t)
+                param_type                : Onboard parameter type: see MAV_VAR enum (uint8_t)
 
                 '''
                 return self.send(self.param_set_encode(target_system, target_component, param_id, param_value, param_type))
@@ -3392,7 +3428,7 @@ class MAVLink(object):
 
                 target_system             : System ID (uint8_t)
                 target_component          : Component ID (uint8_t)
-                type                      : 0: OK, 1: generic error / not accepting mission commands at all right now, 2: coordinate frame is not supported, 3: command is not supported, 4: mission item exceeds storage space, 5: one of the parameters has an invalid value, 6: param1 has an invalid value, 7: param2 has an invalid value, 8: param3 has an invalid value, 9: param4 has an invalid value, 10: x/param5 has an invalid value, 11: y:param6 has an invalid value, 12: z:param7 has an invalid value, 13: received waypoint out of sequence, 14: not accepting any mission commands from this communication partner (uint8_t)
+                type                      : See MAV_MISSION_RESULT enum (uint8_t)
 
                 '''
                 msg = MAVLink_mission_ack_message(target_system, target_component, type)
@@ -3407,7 +3443,7 @@ class MAVLink(object):
 
                 target_system             : System ID (uint8_t)
                 target_component          : Component ID (uint8_t)
-                type                      : 0: OK, 1: generic error / not accepting mission commands at all right now, 2: coordinate frame is not supported, 3: command is not supported, 4: mission item exceeds storage space, 5: one of the parameters has an invalid value, 6: param1 has an invalid value, 7: param2 has an invalid value, 8: param3 has an invalid value, 9: param4 has an invalid value, 10: x/param5 has an invalid value, 11: y:param6 has an invalid value, 12: z:param7 has an invalid value, 13: received waypoint out of sequence, 14: not accepting any mission commands from this communication partner (uint8_t)
+                type                      : See MAV_MISSION_RESULT enum (uint8_t)
 
                 '''
                 return self.send(self.mission_ack_encode(target_system, target_component, type))
@@ -4128,7 +4164,7 @@ class MAVLink(object):
                 executed
 
                 command                   : Command ID, as defined by MAV_CMD enum. (uint16_t)
-                result                    : 1: Command ACCEPTED and EXECUTED, 1: Command TEMPORARY REJECTED/DENIED, 2: Command PERMANENTLY DENIED, 3: Command UNKNOWN/UNSUPPORTED, 4: Command executed, but failed (uint8_t)
+                result                    : See MAV_RESULT enum (uint8_t)
 
                 '''
                 msg = MAVLink_command_ack_message(command, result)
@@ -4141,7 +4177,7 @@ class MAVLink(object):
                 executed
 
                 command                   : Command ID, as defined by MAV_CMD enum. (uint16_t)
-                result                    : 1: Command ACCEPTED and EXECUTED, 1: Command TEMPORARY REJECTED/DENIED, 2: Command PERMANENTLY DENIED, 3: Command UNKNOWN/UNSUPPORTED, 4: Command executed, but failed (uint8_t)
+                result                    : See MAV_RESULT enum (uint8_t)
 
                 '''
                 return self.send(self.command_ack_encode(command, result))
