@@ -44,6 +44,8 @@ extern "C" {
 
 
 /** @brief Enumeration of possible mount operation modes */
+#ifndef HAVE_ENUM_MAV_MOUNT_MODE
+#define HAVE_ENUM_MAV_MOUNT_MODE
 enum MAV_MOUNT_MODE
 {
 	MAV_MOUNT_MODE_RETRACT=0, /* Load and keep safe position (Roll,Pitch,Yaw) from EEPROM and stop stabilization | */
@@ -53,8 +55,11 @@ enum MAV_MOUNT_MODE
 	MAV_MOUNT_MODE_GPS_POINT=4, /* Load neutral position and start to point to Lat,Lon,Alt | */
 	MAV_MOUNT_MODE_ENUM_END=5, /*  | */
 };
+#endif
 
 /** @brief  */
+#ifndef HAVE_ENUM_MAV_CMD
+#define HAVE_ENUM_MAV_CMD
 enum MAV_CMD
 {
 	MAV_CMD_NAV_WAYPOINT=16, /* Navigate to waypoint. |Hold time in decimal seconds. (ignored by fixed wing, time to stay at waypoint for rotary wing)| Acceptance radius in meters (if the sphere with this radius is hit, the waypoint counts as reached)| 0 to pass through the WP, if > 0 radius in meters to pass by WP. Positive value for clockwise orbit, negative value for counter-clockwise orbit. Allows trajectory control.| Desired yaw angle at waypoint (rotary wing)| Latitude| Longitude| Altitude|  */
@@ -99,6 +104,7 @@ enum MAV_CMD
 	MAV_CMD_PREFLIGHT_STORAGE=245, /* Request storage of different parameter values and logs. This command will be only accepted if in pre-flight mode. |Parameter storage: 0: READ FROM FLASH/EEPROM, 1: WRITE CURRENT TO FLASH/EEPROM| Mission storage: 0: READ FROM FLASH/EEPROM, 1: WRITE CURRENT TO FLASH/EEPROM| Reserved| Reserved| Empty| Empty| Empty|  */
 	MAV_CMD_ENUM_END=246, /*  | */
 };
+#endif
 
 // MESSAGE DEFINITIONS
 #include "./mavlink_msg_sensor_offsets.h"
