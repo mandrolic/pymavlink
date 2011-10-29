@@ -121,11 +121,12 @@ class MAVEnumParam(object):
         self.description = description
 
 class MAVEnumEntry(object):
-    def __init__(self, name, value, description=''):
+    def __init__(self, name, value, description='', end_marker=False):
         self.name = name
         self.value = value
         self.description = description
         self.param = []
+        self.end_marker = end_marker
 
 class MAVEnum(object):
     def __init__(self, name, linenumber, description=''):
@@ -209,7 +210,7 @@ class MAVXML(object):
             if in_element == "mavlink.enums.enum":
                 # add a ENUM_END
                 self.enum[-1].entry.append(MAVEnumEntry("%s_ENUM_END" % self.enum[-1].name,
-                                                        self.enum[-1].highest_value+1))
+                                                        self.enum[-1].highest_value+1, end_marker=True))
             in_element_list.pop()
 
         def char_data(data):
@@ -289,8 +290,31 @@ def message_checksum(msg):
             crc.accumulate(chr(f.array_length))
     return (crc.crc&0xFF) ^ (crc.crc>>8)
 
+def merge_enums(xml):
+    '''merge enums between XML files'''
+    emap = {}
+    for x in xml:
+        newenums = []
+        for enum in x.enum:
+            if enum.name in emap:
+                emap[enum.name].entry.pop() # remove end marker
+                emap[enum.name].entry.extend(enum.entry)
+                print("Merged enum %s" % enum.name)
+            else:
+                newenums.append(enum)
+                emap[enum.name] = enum
+        x.enum = newenums
+    # sort by value
+    for e in emap:
+        emap[e].entry = sorted(emap[e].entry,
+                               key=operator.attrgetter('value'),
+                               reverse=False)
+
+
 def check_duplicates(xml):
     '''check for duplicate message IDs'''
+
+    merge_enums(xml)
 
     msgmap = {}
     enummap = {}
