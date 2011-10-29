@@ -115,11 +115,14 @@ ${{include_list:#include "../${base}/${base}.h"
 
 ${{enum:
 /** @brief ${description} */
+#ifndef HAVE_ENUM_${name}
+#define HAVE_ENUM_${name}
 enum ${name}
 {
 ${{entry:	${name}=${value}, /* ${description} |${{param:${description}| }} */
 }}
 };
+#endif
 }}
 
 // MESSAGE DEFINITIONS
