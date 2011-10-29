@@ -73,7 +73,7 @@ static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t
 	packet.size = size;
 	packet.orientation = orientation;
 	packet.response = response;
-	memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
+	mav_array_memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
         memcpy(_MAV_PAYLOAD(msg), &packet, 53);
 #endif
 
@@ -121,7 +121,7 @@ static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, ui
 	packet.size = size;
 	packet.orientation = orientation;
 	packet.response = response;
-	memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
+	mav_array_memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
         memcpy(_MAV_PAYLOAD(msg), &packet, 53);
 #endif
 
@@ -179,7 +179,7 @@ static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float 
 	packet.size = size;
 	packet.orientation = orientation;
 	packet.response = response;
-	memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
+	mav_array_memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BRIEF_FEATURE, (const char *)&packet, 53);
 #endif
 }

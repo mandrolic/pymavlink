@@ -73,7 +73,7 @@ static inline uint16_t mavlink_msg_point_of_interest_pack(uint8_t system_id, uin
 	packet.type = type;
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
-	memcpy(packet.name, name, sizeof(char)*26);
+	mav_array_memcpy(packet.name, name, sizeof(char)*26);
         memcpy(_MAV_PAYLOAD(msg), &packet, 43);
 #endif
 
@@ -121,7 +121,7 @@ static inline uint16_t mavlink_msg_point_of_interest_pack_chan(uint8_t system_id
 	packet.type = type;
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
-	memcpy(packet.name, name, sizeof(char)*26);
+	mav_array_memcpy(packet.name, name, sizeof(char)*26);
         memcpy(_MAV_PAYLOAD(msg), &packet, 43);
 #endif
 
@@ -179,7 +179,7 @@ static inline void mavlink_msg_point_of_interest_send(mavlink_channel_t chan, ui
 	packet.type = type;
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
-	memcpy(packet.name, name, sizeof(char)*26);
+	mav_array_memcpy(packet.name, name, sizeof(char)*26);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST, (const char *)&packet, 43, 95);
 #endif
 }
