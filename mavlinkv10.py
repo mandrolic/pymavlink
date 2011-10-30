@@ -8,6 +8,8 @@ Note: this file has been auto-generated. DO NOT EDIT
 
 import struct, array, mavutil, time
 
+WIRE_PROTOCOL_VERSION = "1.0"
+
 class MAVLink_header(object):
     '''MAVLink message header'''
     def __init__(self, msgId, mlen=0, seq=0, srcSystem=0, srcComponent=0):

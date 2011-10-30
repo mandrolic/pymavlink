@@ -24,6 +24,8 @@ Note: this file has been auto-generated. DO NOT EDIT
 
 import struct, array, mavutil, time
 
+WIRE_PROTOCOL_VERSION = "${WIRE_PROTOCOL_VERSION}"
+
 class MAVLink_header(object):
     '''MAVLink message header'''
     def __init__(self, msgId, mlen=0, seq=0, srcSystem=0, srcComponent=0):
@@ -99,7 +101,8 @@ class MAVLink_message(object):
 
 """, {'FILELIST' : ",".join(args),
       'PROTOCOL_MARKER' : xml.protocol_marker,
-      'crc_extra' : xml.crc_extra })
+      'crc_extra' : xml.crc_extra,
+      'WIRE_PROTOCOL_VERSION' : xml.wire_protocol_version })
 
 
 def generate_enums(outf, enums):
