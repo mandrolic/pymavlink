@@ -10,6 +10,11 @@ import socket, math, struct, time, os, fnmatch, array
 from math import *
 from mavextra import *
 
+if os.getenv('MAVLINK10'):
+    import mavlinkv10 as mavlink
+else:
+    import mavlink
+
 def evaluate_expression(expression, vars):
     '''evaluation an expression'''
     try:
@@ -31,11 +36,14 @@ def evaluate_condition(condition, vars):
 class mavfile(object):
     '''a generic mavlink port'''
     def __init__(self, fd, address, source_system=255):
-        import mavlink
         self.fd = fd
         self.address = address
-        self.messages = { 'MAV' : self,
-                          'HOME' : mavlink.MAVLink_gps_raw_message(0,0,0,0,0,0,0,0,0) }
+        self.messages = { 'MAV' : self }
+        if mavlink.WIRE_PROTOCOL_VERSION == "1.0":
+            self.messages['HOME'] = mavlink.MAVLink_gps_raw_int_message(0,0,0,0,0,0,0,0,0,0)
+            mavlink.MAVLink_waypoint_message = mavlink.MAVLink_mission_item_message
+        else:
+            self.messages['HOME'] = mavlink.MAVLink_gps_raw_message(0,0,0,0,0,0,0,0,0)
         self.params = {}
         self.mav = None
         self.target_system = 0
@@ -71,13 +79,15 @@ class mavfile(object):
         if type == 'HEARTBEAT':
             self.target_system = msg.get_srcSystem()
             self.target_component = msg.get_srcComponent()
+            if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+                self.flightmode = mode_string_v10(msg)
         elif type == 'PARAM_VALUE':
             self.params[str(msg.param_id)] = msg.param_value
             if msg.param_index+1 == msg.param_count:
                 self.param_fetch_in_progress = False
                 self.param_fetch_complete = True
-        elif type == 'SYS_STATUS':
-            self.flightmode = mode_string(msg.mode, msg.nav_mode)
+        elif type == 'SYS_STATUS' and mavlink.WIRE_PROTOCOL_VERSION == '0.9':
+            self.flightmode = mode_string_v09(msg)
         elif type == 'GPS_RAW':
             if self.messages['HOME'].fix_type < 2:
                 self.messages['HOME'] = msg
@@ -138,6 +148,53 @@ class mavfile(object):
         if not mtype in self.messages:
             return time.time() - self.start_time
         return time.time() - self.messages[mtype]._timestamp
+
+    def param_set_send(self, parm_name, parm_value, parm_type=None):
+        '''wrapper for parameter set'''
+        if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+            if parm_type == None:
+                parm_type = mavlink.MAV_VAR_FLOAT
+            self.mav.param_set_send(self.target_system, self.target_component,
+                                    parm_name, parm_value, parm_type)
+        else:
+            self.mav.param_set_send(self.target_system, self.target_component,
+                                    parm_name, parm_value)
+
+    def waypoint_request_list_send(self):
+        '''wrapper for waypoint_request_list_send'''
+        if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+            self.mav.mission_request_list_send(self.target_system, self.target_component)
+        else:
+            self.mav.waypoint_request_list_send(self.target_system, self.target_component)
+
+    def waypoint_clear_all_send(self):
+        '''wrapper for waypoint_clear_all_send'''
+        if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+            self.mav.mission_clear_all_send(self.target_system, self.target_component)
+        else:
+            self.mav.waypoint_clear_all_send(self.target_system, self.target_component)
+
+    def waypoint_request_send(self, seq):
+        '''wrapper for waypoint_request_send'''
+        if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+            self.mav.mission_request_send(self.target_system, self.target_component, seq)
+        else:
+            self.mav.waypoint_request_list_send(self.target_system, self.target_component, seq)
+
+    def waypoint_set_current_send(self, seq):
+        '''wrapper for waypoint_set_current_send'''
+        if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+            self.mav.mission_set_current_send(self.target_system, self.target_component, seq)
+        else:
+            self.mav.waypoint_set_current_send(self.target_system, self.target_component, seq)
+
+    def waypoint_count_send(self, seq):
+        '''wrapper for waypoint_count_send'''
+        if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
+            self.mav.mission_count_send(self.target_system, self.target_component, seq)
+        else:
+            self.mav.waypoint_count_send(self.target_system, self.target_component, seq)
+
 
 class mavserial(mavfile):
     '''a serial mavlink port'''
@@ -465,8 +522,11 @@ def auto_detect_serial(preferred='*'):
         return auto_detect_serial_win32(preferred=preferred)
     return auto_detect_serial_unix(preferred=preferred)
 
-def mode_string(mode, nav_mode):
-    '''work out autopilot mode'''
+def mode_string_v09(msg):
+    '''mode string for 0.9 protocol'''
+    mode = msg.mode
+    nav_mode = msg.nav_mode
+
     MAV_MODE_UNINIT = 0
     MAV_MODE_MANUAL = 2
     MAV_MODE_GUIDED = 3
@@ -508,6 +568,31 @@ def mode_string(mode, nav_mode):
     if cmode in mapping:
         return mapping[cmode]
     return "Mode(%s,%s)" % cmode
+
+def mode_string_v10(msg):
+    '''mode string for 1.0 protocol, from heartbeat'''
+    if not msg.base_mode & mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED:
+        return "Mode(0x%08x)" % msg.base_mode
+    mapping = {
+        0 : 'MANUAL',
+        1 : 'CIRCLE',
+        2 : 'STABILIZE',
+        5 : 'FBWA',
+        6 : 'FBWB',
+        7 : 'FBWC',
+        10 : 'AUTO',
+        11 : 'RTL',
+        12 : 'LOITER',
+        13 : 'TAKEOFF',
+        14 : 'LAND',
+        15 : 'GUIDED',
+        16 : 'INITIALISING'
+        }
+    if msg.custom_mode in mapping:
+        return mapping[msg.custom_mode]
+    return "Mode(%u)" % msg.custom_mode
+
+    
 
 class x25crc(object):
     '''x25 CRC - based on checksum.h from mavlink library'''
