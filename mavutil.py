@@ -179,7 +179,7 @@ class mavfile(object):
         if mavlink.WIRE_PROTOCOL_VERSION == '1.0':
             self.mav.mission_request_send(self.target_system, self.target_component, seq)
         else:
-            self.mav.waypoint_request_list_send(self.target_system, self.target_component, seq)
+            self.mav.waypoint_request_send(self.target_system, self.target_component, seq)
 
     def waypoint_set_current_send(self, seq):
         '''wrapper for waypoint_set_current_send'''
