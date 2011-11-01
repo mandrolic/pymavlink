@@ -57,6 +57,7 @@ class mavfile(object):
         self.start_time = time.time()
         self.flightmode = "UNKNOWN"
         self.timestamp = 0
+        self.message_hooks = []
 
     def recv(self):
         '''default recv method'''
@@ -91,6 +92,8 @@ class mavfile(object):
         elif type == 'GPS_RAW':
             if self.messages['HOME'].fix_type < 2:
                 self.messages['HOME'] = msg
+        for hook in self.message_hooks:
+            hook(self, msg)
 
 
     def recv_msg(self):
