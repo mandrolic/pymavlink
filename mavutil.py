@@ -307,6 +307,7 @@ class mavtcp(mavfile):
         self.destination_addr = (a[0], int(a[1]))
         self.port.connect(self.destination_addr)
         self.port.setblocking(0)
+        self.port.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         mavfile.__init__(self, self.port.fileno(), device, source_system=source_system)
 
     def recv(self):
