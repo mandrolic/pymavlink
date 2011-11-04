@@ -127,11 +127,11 @@ typedef struct __mavlink_message_info {
 } mavlink_message_info_t;
 
 #define _MAV_PAYLOAD(msg) ((const char *)(&(msg)->payload64[0]))
-#define _MAV_PAYLOAD_NON_CONST(msg) (char *)((char *)(&(msg)->payload64[0]))
+#define _MAV_PAYLOAD_NON_CONST(msg) ((char *)((char *)(&(msg)->payload64[0])))
 
 // checksum is immediately after the payload bytes
-#define mavlink_ck_a(msg) *(msg->len + (uint8_t *)_MAV_PAYLOAD(msg))
-#define mavlink_ck_b(msg) *((msg->len+(uint16_t)1) + (uint8_t *)_MAV_PAYLOAD(msg))
+#define mavlink_ck_a(msg) *(msg->len + (uint8_t *)_MAV_PAYLOAD_NON_CONST(msg))
+#define mavlink_ck_b(msg) *((msg->len+(uint16_t)1) + (uint8_t *)_MAV_PAYLOAD_NON_CONST(msg))
 
 typedef enum {
     MAVLINK_COMM_0,
