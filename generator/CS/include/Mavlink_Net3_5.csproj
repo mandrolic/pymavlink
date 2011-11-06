@@ -56,21 +56,18 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="mavlinkStructDefs.cs" />
-    <Compile Include="mavlinkStructDefs_ser.cs" />
     <Compile Include="Mavlink_BitConverter.cs" />
     <Compile Include="Mavlink_Crc.cs" />
     <Compile Include="Mavlink_Link.cs" />
+    <Compile Include="mavlink_messages.generated.cs" />
+    <Compile Include="mavlink_messages_codec.generated.cs" />
     <Compile Include="Mavlink_Network.cs" />
-   
     <None Include="2011-09-22 07-00-05.tlog">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -9,7 +9,6 @@ import mavparse, mavtemplate
 
 t = mavtemplate.MAVTemplate()
 
-
 def generate_preamble(outf, msgs, args, xml):
     print("Generating preamble")
     t.write(outf, """
@@ -26,27 +25,27 @@ using System;
 
 def generate_xmlDocSummary(outf, summaryText, tabDepth):
     indent = '\t' * tabDepth
-    escapedText = summaryText.replace("\n","\n///")
-    outf.write("%s/// <summary>\n" % indent)
+    escapedText = summaryText.replace("\n","\n%s///" % indent)
+    outf.write("\n%s/// <summary>\n" % indent)
     outf.write("%s/// %s\n" % (indent, escapedText))
-    outf.write("%s/// <summary>\n" % indent)
+    outf.write("%s/// </summary>\n" % indent)
     
     
 def generate_enums(outf, enums):
     print("Generating enums")
-    outf.write("\n// Mavlink enums\n\n")
+    outf.write("namespace MavLink\n{\n")
     for e in enums:
         if len(e.description) > 0:
-            generate_xmlDocSummary(outf, e.description, 0)
-        outf.write("public enum %s : byte" % e.name)
-        outf.write("\n{\n")
-        
+            generate_xmlDocSummary(outf, e.description, 1)
+        outf.write("\tpublic enum %s : byte\n\t{\n" % e.name)
+
         for entry in e.entry:
             if len(entry.description) > 0:
-                generate_xmlDocSummary(outf, entry.description, 1)
-            outf.write("\t%s = %u,\n" % (entry.name, entry.value))
+                generate_xmlDocSummary(outf, entry.description, 2)
+            outf.write("\t\t%s = %u,\n" % (entry.name, entry.value))
 
-        outf.write("\n}\n\n")
+        outf.write("\n\t}\n\n")
+    outf.write("\n}\n")
 
 def mavfmt(field):
     '''work out the struct format for a type'''
@@ -106,6 +105,7 @@ Note: this file has been auto-generated. DO NOT EDIT
     outf.write("using System.Collections;\n")
     outf.write("namespace MavLink\n{\n")
     outf.write("\tpublic delegate object MavlinkPacketDeserializeFunc(byte[] bytes, int offset);\n\n")
+    
     outf.write("\tpublic class MavLink_Deserializer\n\t{\n")
     outf.write("\t\tpublic static MavBitConverter bitconverter = new MavBitConverter();\n\n")
    
@@ -220,7 +220,7 @@ def generate_Serialization(outf, messages):
 def generate(basename, xml):
     '''generate complete MAVLink C implemenation'''
 
-    filename = basename + '.cs'
+    filename = basename + '.generated.cs'
 
     msgs = []
     enums = []
@@ -230,7 +230,7 @@ def generate(basename, xml):
         enums.extend(x.enum)
         filelist.append(os.path.basename(x.filename))
 
-    print("Generating %s" % filename)
+    print("Generating messages file: %s" % filename)
     dir = os.path.dirname(filename)
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -240,8 +240,10 @@ def generate(basename, xml):
     generate_classes(outf, msgs)
     outf.close()
     
+    
+    
     print("Generating the (De)Serializer classes")
-    filename = basename + '_ser.cs'
+    filename = basename + '_codec.generated.cs'
     outf = open(filename, "w")
     generate_Deserialization(outf, msgs)
     generate_Serialization(outf, msgs)
