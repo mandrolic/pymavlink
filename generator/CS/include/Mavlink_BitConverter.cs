@@ -3,87 +3,104 @@ using System.Text;
 
 namespace MavLink
 {
-    public static class FixedBufferUtil
+    public static class ByteArrayUtil
     {
-        public static unsafe void CopyToFixed(byte[] source, int sourceOffset, byte* target,
-          int targetOffset, int count)
+        
+
+        public static byte[] ToChar(byte[] source, int sourceOffset, int size)
         {
-            // If either offset, or the number of bytes to copy, is negative, you
-            // cannot complete the copy.
-            if ((sourceOffset < 0) || (targetOffset < 0) || (count < 0))
-                throw new System.ArgumentException();
-
-            if (source.Length - sourceOffset < count)
-                throw new System.ArgumentException();
-
-            byte* pt = target + targetOffset;
-
-            // Copy the specified number of bytes from source to target.
-            for (int i = 0; i < count; i++)
-            {
-                *pt = source[i + sourceOffset];
-                pt++;
-            }
+            // todo
+            return new byte[size];
         }
 
-        public static unsafe void CopyToFixed(byte[] source, int sourceOffset, sbyte* target,
-          int targetOffset, int count)
+        public static sbyte[] ToInt8(byte[] source, int sourceOffset, int size)
         {
-            // If either offset, or the number of bytes to copy, is negative, you
-            // cannot complete the copy.
-            if ((sourceOffset < 0) || (targetOffset < 0) || (count < 0))
-                throw new System.ArgumentException();
-
-            if (source.Length - sourceOffset < count)
-                throw new System.ArgumentException();
-
-            sbyte* pt = target + targetOffset;
+            // todo
+            return new sbyte[size];
 
             // Copy the specified number of bytes from source to target.
-            for (int i = 0; i < count; i++)
-            {
-                *pt = unchecked((sbyte)source[i + sourceOffset]);
-                pt++;
-            }
-        }
-
-        public static unsafe void CopyStringToFixed(string source, sbyte* dst, int dstOffset)
-        {
-            sbyte* pt = dst + dstOffset;
-
-            // Copy the specified number of bytes from source to target.
-            for (int i = 0; i < source.Length; i++)
-            {
-                *pt = unchecked((sbyte)source[i]);
-                pt++;
-            }
-        }
-
-        public static unsafe string CopyFixedToString(sbyte* source, int maxCount)
-        {
-            sbyte* pt = source;
-            string outStr = string.Empty;
-            // Copy the specified number of bytes from source to target.
-            for (int i = 0; i < maxCount; i++)
-            {
-                outStr = outStr + *pt;
-                pt++;
-            }
-            return outStr;
+//            for (int i = 0; i < count; i++)
+//            {
+//                *pt = unchecked((sbyte)source[i + sourceOffset]);
+//                pt++;
+//            }
         }
 
 
-        public static unsafe void CopyFromFixed(byte* source, int sourceOffset, byte[] target,
-         int targetOffset, int count)
+        public static void FromByteArray(byte[] passkey, byte[] bytes, int offset, int size)
         {
             // todo
         }
 
-        public static unsafe void CopyFromFixed(sbyte* source, int sourceOffset, byte[] target,
-         int targetOffset, int count)
+        public static void FromByteArray(sbyte[] paramId, byte[] bytes, int offset, int size)
         {
             // todo
         }
+
+        public static sbyte[] FromString(string str)
+        {
+            var encoding = new UTF8Encoding();
+            var bytes =  encoding.GetBytes(str);
+
+            var sbytes = new sbyte[bytes.Length];
+            
+            for (int i = 0; i < bytes.Length; i++)
+                sbytes[i] = (sbyte) bytes[i];
+
+            return sbytes;
+
+            //return someParam.ToCharArray();
+        }
+
+        public static string ToString(sbyte[] sbytes)
+        {
+            var bytes = new byte[sbytes.Length];
+
+            for (int i = 0; i < bytes.Length; i++)
+                bytes[i] = (byte) sbytes[i];
+
+            var encoding = new UTF8Encoding();
+            return encoding.GetString(bytes);
+
+        }
+
+//        public static unsafe void CopyToFixed(byte[] source, int sourceOffset, byte* target,
+//          int targetOffset, int count)
+//        {
+            // If either offset, or the number of bytes to copy, is negative, you
+            // cannot complete the copy.
+//            if ((sourceOffset < 0) || (targetOffset < 0) || (count < 0))
+//                throw new System.ArgumentException();
+//
+//            if (source.Length - sourceOffset < count)
+//                throw new System.ArgumentException();
+//
+//            byte* pt = target + targetOffset;
+//
+            // Copy the specified number of bytes from source to target.
+//            for (int i = 0; i < count; i++)
+//            {
+//                *pt = source[i + sourceOffset];
+//                pt++;
+//            }
+//        }
+
+
+//        public static unsafe string CopyFixedToString(sbyte* source, int maxCount)
+//        {
+//            sbyte* pt = source;
+//            string outStr = string.Empty;
+            // Copy the specified number of bytes from source to target.
+//            for (int i = 0; i < maxCount; i++)
+//            {
+//                outStr = outStr + *pt;
+//                pt++;
+//            }
+//            return outStr;
+//        }
+
+
+       
     }
 
     /// <summary>

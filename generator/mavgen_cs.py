@@ -9,6 +9,21 @@ import mavparse, mavtemplate
 
 t = mavtemplate.MAVTemplate()
 
+map = {
+        'float'    : 'float',
+        'double'   : 'double',
+        'char'     : 'byte',
+        'int8_t'   : 'sbyte',
+        'uint8_t'  : 'byte',
+        'uint8_t_mavlink_version'  : 'B',
+        'int16_t'  : 'Int16',
+        'uint16_t' : 'UInt16',
+        'int32_t'  : 'Int32',
+        'uint32_t' : 'UInt32',
+        'int64_t'  : 'Int64',
+        'uint64_t' : 'UInt64',
+        }
+
 def generate_preamble(outf, msgs, args, xml):
     print("Generating preamble")
     t.write(outf, """
@@ -46,26 +61,6 @@ def generate_enums(outf, enums):
 
         outf.write("\n\t}\n\n")
     outf.write("\n}\n")
-
-def mavfmt(field):
-    '''work out the struct format for a type'''
-    map = {
-        'float'    : 'float',
-        'double'   : 'double',
-        'char'     : 'byte',
-        'int8_t'   : 'sbyte',
-        'uint8_t'  : 'byte',
-        'uint8_t_mavlink_version'  : 'B',
-        'int16_t'  : 'Int16',
-        'uint16_t' : 'UInt16',
-        'int32_t'  : 'Int32',
-        'uint32_t' : 'UInt32',
-        'int64_t'  : 'Int64',
-        'uint64_t' : 'UInt64',
-        }
-
-   
-    return map[field.type]
         
 def generate_classes(outf, msgs):
     print("Generating class definitions")
@@ -75,7 +70,7 @@ def generate_classes(outf, msgs):
     for m in msgs:
         if (len(m.description) >0):
             generate_xmlDocSummary(outf, m.description, 1)
-        outf.write("""\tpublic unsafe struct MAVLink_%s_message
+        outf.write("""\tpublic struct MAVLink_%s_message
     {
 """ % m.name.lower())
     
@@ -83,9 +78,9 @@ def generate_classes(outf, msgs):
             if (f.description.upper() != f.name.upper()):
                 generate_xmlDocSummary(outf, f.description, 2)
             if (f.array_length):
-                outf.write("\t\tpublic fixed %s %s[%s];\n" % (mavfmt(f), f.name, f.array_length))
+                outf.write("\t\tpublic %s[] %s; // Array size %s\n" % (map[f.type], f.name, f.array_length))
             else:
-                outf.write("\t\tpublic %s %s;\n" % (mavfmt(f), f.name))
+                outf.write("\t\tpublic %s %s;\n" % (map[f.type], f.name))
             
         outf.write("\t}\n\n")    
     outf.write("}\n\n")
@@ -117,7 +112,7 @@ Note: this file has been auto-generated. DO NOT EDIT
     
     for m in messages:
         classname="MAVLink_%s_message" % m.name.lower()
-        outf.write("\n\t\tpublic unsafe static object Deserialize_%s(byte[] bytes, int offset)\n\t\t{\n" % (m.name))
+        outf.write("\n\t\tpublic static object Deserialize_%s(byte[] bytes, int offset)\n\t\t{\n" % (m.name))
         offset = 0
     
         outf.write("\t\t\tvar obj = new %s();\n" % classname)
@@ -127,6 +122,7 @@ Note: this file has been auto-generated. DO NOT EDIT
         'float'    : ('ToSingle', 4),
         'double'   : ('ToDouble', 8),
         'int8_t'   : ('ToInt8', 1),
+        'char'   :   ('ToChar', 1),
         'int16_t'  : ('ToInt16', 2),
         'uint16_t' : ('ToUInt16', 2),
         'int32_t'  : ('ToInt32', 4),
@@ -137,7 +133,7 @@ Note: this file has been auto-generated. DO NOT EDIT
         
         for f in m.fields:
             if (f.array_length):
-                outf.write("\t\t\tFixedBufferUtil.CopyToFixed(bytes, offset + %s, obj.%s, 0, %s);\n" % (offset, f.name, f.array_length))
+                outf.write("\t\t\tobj.%s =  ByteArrayUtil.%s(bytes, offset + %s, %s);\n" % (f.name, mapType[f.type][0], offset, f.array_length))
                 offset += f.array_length
                 continue
           
@@ -170,7 +166,6 @@ def generate_Serialization(outf, messages):
         outf.write("\n\t\t\t{typeof(%s), new MavlinkPacketSerializeFunc(Serialize_%s)}," % (classname,m.name))
     outf.write("\n\t\t};\n")
     
-
     for m in messages:
         classname="MAVLink_%s_message" % m.name.lower()
         outf.write("\n\t\tpublic static int Serialize_%s(byte[] bytes, ref int offset, object obj)\n\t\t{\n" % m.name)
@@ -180,21 +175,22 @@ def generate_Serialization(outf, messages):
         for f in m.fields:
             if (f.type == 'uint8_t'):
                 if (f.array_length):
-                    outf.write("\t\t\tunsafe { FixedBufferUtil.CopyFromFixed(msg.%s, 0, bytes, offset + %s, %s); }\n" % (f.name,offset,f.array_length))
+                    outf.write("\t\t\tByteArrayUtil.FromByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
                     offset += f.array_length
                 else:
                     outf.write("\t\t\tbytes[offset + %s] = msg.%s;\n" % (offset,f.name))
                     offset+=1
             if (f.type == 'int8_t'):
                 if (f.array_length):
-                    outf.write("\t\t\tunsafe { FixedBufferUtil.CopyFromFixed(msg.%s, 0, bytes, offset + %s, %s);}\n" % (f.name,offset,f.array_length))
+                    outf.write("\t\t\tByteArrayUtil.FromByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
                     offset += f.array_length
                 else:
                     outf.write("\t\t\tbytes[offset + %s] = unchecked((byte)msg.%s);\n" % (offset,f.name))
                     offset+=1
             if (f.type == 'char'):
                 if (f.array_length):
-                    outf.write("\t\t\tunsafe {FixedBufferUtil.CopyFromFixed(msg.%s, 0, bytes, offset + %s, %s);}\n" % (f.name,offset,f.array_length))
+                    outf.write("\t\t\tByteArrayUtil.FromByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
+                    #outf.write("\t\t\tunsafe {FixedBufferUtil.CopyFromFixed(msg.%s, 0, bytes, offset + %s, %s);}\n" % (f.name,offset,f.array_length))
                     offset += f.array_length
                 else:
                     outf.write("\t\t\tbytes[offset + %s] = msg.%s; // todo: check int8_t and char are compatible\n" % (offset,f.name))

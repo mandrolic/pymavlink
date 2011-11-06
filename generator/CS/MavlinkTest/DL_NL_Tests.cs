@@ -189,7 +189,7 @@ namespace MavlinkTest
             var packet = new MAVLink_statustext_message
             {
                severity = 1,
-              // text = FixedBufferUtil.CopyToFixed("hello".Cast<sbyte>().ToArray(),
+               text = ByteArrayUtil.FromString("hello")
             };
            
             var ntbytes = _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
@@ -202,8 +202,14 @@ namespace MavlinkTest
             var mavPacket = packetsRxed[0];
 
             var msg = (MAVLink_statustext_message)mavPacket.Message;
+
+            var str = ByteArrayUtil.ToString(msg.text);
+            Assert.AreEqual("hello",str);
+
         }
 
+
+        [TestMethod]
         public void RoundTrip_MAVLink_param_value_message()
         {
             Setup();
@@ -212,13 +218,9 @@ namespace MavlinkTest
             {
                 param_count = 3,
                 param_index = 1,
-                param_value = 4.4F
+                param_value = 4.4F,
+                param_id = ByteArrayUtil.FromString("Some Param")
             };
-
-            unsafe
-            {
-                FixedBufferUtil.CopyStringToFixed("Hello", packet.param_id, 0);
-            }
 
             var ntbytes = _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
             var dlbytes = _dl.SendPacket(ntbytes);
@@ -231,11 +233,9 @@ namespace MavlinkTest
 
             var msg = (MAVLink_param_value_message)mavPacket.Message;
 
-            unsafe
-            {
-               var str =  FixedBufferUtil.CopyFixedToString(msg.param_id, 15);
-               Assert.AreEqual("Hello", str);
-            }
+            var str = ByteArrayUtil.ToString(msg.param_id);
+            Assert.AreEqual("Hello", str);
+           
 
             Assert.AreEqual(3, msg.param_count);
             Assert.AreEqual(1, msg.param_index);
