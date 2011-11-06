@@ -68,7 +68,8 @@ typedef struct param_union {
 		float param_float;
 		int32_t param_int32;
 		uint32_t param_uint32;
-		uint8_t param_uint8[4];
+		uint8_t param_uint8;
+		uint8_t bytes[4];
 	};
 	uint8_t type;
 } mavlink_param_union_t;
@@ -110,12 +111,12 @@ typedef enum {
 #define MAVLINK_MAX_FIELDS 64
 
 typedef struct __mavlink_field_info {
-	const char *name;             // name of this field
-	const char *print_format;     // printing format hint, or NULL
-	mavlink_message_type_t type;  // type of this field
-	unsigned array_length;        // if non-zero, field is an array
-	unsigned wire_offset;         // offset of each field in the payload
-	unsigned structure_offset;    // offset in a C structure
+        const char *name;                 // name of this field
+        const char *print_format;         // printing format hint, or NULL
+        mavlink_message_type_t type;      // type of this field
+        unsigned int array_length;        // if non-zero, field is an array
+        unsigned int wire_offset;         // offset of each field in the payload
+        unsigned int structure_offset;    // offset in a C structure
 } mavlink_field_info_t;
 
 // note that in this structure the order of fields is the order
