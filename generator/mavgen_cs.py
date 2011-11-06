@@ -131,8 +131,8 @@ Note: this file has been auto-generated. DO NOT EDIT
         'uint16_t' : ('ToUInt16', 2),
         'int32_t'  : ('ToInt32', 4),
         'uint32_t' : ('ToUInt32', 4),
-        'int64_t'  : ('ToInt32', 8),
-        'uint64_t' : ('ToUInt32', 8),
+        'int64_t'  : ('ToInt64', 8),
+        'uint64_t' : ('ToUInt64', 8),
         }
         
         for f in m.fields:

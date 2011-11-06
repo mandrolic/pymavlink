@@ -195,22 +195,23 @@ namespace MavLink
       
        
 
-        public byte[] GetBytes(UInt64 value) 
+        public byte[] GetBytes(UInt64 value)
         {
-            return new byte[8] 
-            { 
-                (byte)((value >> 56) & 0x000000FF),
-                (byte)((value >> 48) & 0x000000FF),
-                (byte)((value >> 40) & 0x000000FF),
-                (byte)((value >> 32) & 0x000000FF),
-                (byte)((value >> 24) & 0x000000FF),
-                (byte)((value >> 16) & 0x000000FF),
-                (byte)((value >> 8) & 0x000000FF),
-                (byte)(value & 0x000000FF), 
-            };
+            var bytes = new byte[8] 
+                            { 
+                                (byte)((value >> 56) & 0x000000FF),
+                                (byte)((value >> 48) & 0x000000FF),
+                                (byte)((value >> 40) & 0x000000FF),
+                                (byte)((value >> 32) & 0x000000FF),
+                                (byte)((value >> 24) & 0x000000FF),
+                                (byte)((value >> 16) & 0x000000FF),
+                                (byte)((value >> 8) & 0x000000FF),
+                                (byte)(value & 0x000000FF), 
+                            };
+            return bytes;
         }
 
-         public byte[] GetBytes(Int64 value) {
+        public byte[] GetBytes(Int64 value) {
             return new byte[8] 
             { 
                 (byte)((value >> 56) & 0x000000FF),
