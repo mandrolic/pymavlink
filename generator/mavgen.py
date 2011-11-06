@@ -18,6 +18,7 @@ def mavgen(opts, args) :
     import mavgen_c
 
     xml = []
+import mavgen_cs
 
     for fname in args:
         print("Parsing %s" % fname)
