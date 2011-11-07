@@ -5,36 +5,43 @@ namespace MavLink
 {
     public static class ByteArrayUtil
     {
-        
-
         public static byte[] ToChar(byte[] source, int sourceOffset, int size)
         {
-            // todo
-            return new byte[size];
+            var bytes = new byte[size];
+
+            for (int i = 0; i < size; i++)
+                bytes[i] = source[i + sourceOffset];
+
+            return bytes;
         }
 
         public static sbyte[] ToInt8(byte[] source, int sourceOffset, int size)
         {
-            // todo
-            return new sbyte[size];
+            var bytes = new sbyte[size];
 
-            // Copy the specified number of bytes from source to target.
-//            for (int i = 0; i < count; i++)
-//            {
-//                *pt = unchecked((sbyte)source[i + sourceOffset]);
-//                pt++;
-//            }
+            for (int i = 0; i < size; i++)
+                bytes[i] = unchecked((sbyte)source[i + sourceOffset]);
+
+            return bytes;
         }
 
 
-        public static void FromByteArray(byte[] passkey, byte[] bytes, int offset, int size)
+        public static void FromByteArray(byte[] src, byte[] dst, int offset, int size)
         {
-            // todo
+            int i;
+            for (i = 0; i < size; i++)
+                dst[offset + i] = src[i];
+            while (i++ < size)
+                dst[offset + i] = 0;
         }
 
-        public static void FromByteArray(sbyte[] paramId, byte[] bytes, int offset, int size)
+        public static void FromByteArray(sbyte[] src, byte[] dst, int offset, int size)
         {
-            // todo
+            int i;
+            for (i = 0; i < size && i<src.Length; i++)
+                dst[offset + i] = (byte)src[i];
+            while (i++ < size)
+                dst[offset + i] = 0;
         }
 
         public static sbyte[] FromString(string str)
@@ -55,13 +62,15 @@ namespace MavLink
         public static string ToString(sbyte[] sbytes)
         {
             var bytes = new byte[sbytes.Length];
-
-            for (int i = 0; i < bytes.Length; i++)
+            int i;
+            for ( i = 0; i < bytes.Length && sbytes[i] != '\0'; i++)
                 bytes[i] = (byte) sbytes[i];
 
-            var encoding = new UTF8Encoding();
-            return encoding.GetString(bytes);
+            var bytesUntilNull = new byte[i];
+            Array.Copy(bytes, bytesUntilNull, i);
 
+            var encoding = new UTF8Encoding();
+            return encoding.GetString(bytesUntilNull);
         }
 
 //        public static unsafe void CopyToFixed(byte[] source, int sourceOffset, byte* target,

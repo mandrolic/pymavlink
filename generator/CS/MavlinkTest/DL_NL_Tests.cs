@@ -234,7 +234,7 @@ namespace MavlinkTest
             var msg = (MAVLink_param_value_message)mavPacket.Message;
 
             var str = ByteArrayUtil.ToString(msg.param_id);
-            Assert.AreEqual("Hello", str);
+            Assert.AreEqual("Some Param", str);
            
 
             Assert.AreEqual(3, msg.param_count);
