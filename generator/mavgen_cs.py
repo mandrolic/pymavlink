@@ -122,6 +122,7 @@ Note: this file has been auto-generated. DO NOT EDIT
         'float'    : ('ToSingle', 4),
         'double'   : ('ToDouble', 8),
         'int8_t'   : ('ToInt8', 1),
+        'uint8_t'   : ('ToUInt8', 1),
         'char'   :   ('ToChar', 1),
         'int16_t'  : ('ToInt16', 2),
         'uint16_t' : ('ToUInt16', 2),
