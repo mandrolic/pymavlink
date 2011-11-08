@@ -14,6 +14,7 @@ goto :eof
 :gen_for_xml
 set base=%~n1
 .\mavgen.py --lang=C --wire-protocol=%2 --output=C\include_v%2 message_definitions\v%2\%1 || goto :exit_fail 1
+.\mavgen.py --lang=CS --wire-protocol=%2 --output=CS\%base%_v%2\mavlink_messages message_definitions\v%2\%1 || goto :exit_fail 1
 .\mavgen.py --lang=python --wire-protocol=%2 --output=python\mavlink_%base%_v%2.py message_definitions\v%2\%1 || goto :exit_fail 1
 goto :eof
  
