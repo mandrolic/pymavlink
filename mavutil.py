@@ -314,7 +314,7 @@ class mavtcp(mavfile):
         try:
             data = self.port.recv(300)
         except socket.error as e:
-            if e.errno == 11:
+            if e.errno in [ 11, 35 ]:
                 return ""
             raise
         return data
