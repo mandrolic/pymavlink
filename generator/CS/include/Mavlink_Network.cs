@@ -21,6 +21,11 @@ namespace MavlinkStructs
 
         public event PacketReceivedEventHandler PacketReceived;
 
+        // TODO: am I ever going to use a different mavlink fsctory. Don't think so must only be for testing
+        public Mavlink_Network(IDataLink linkLayer)
+            : this(linkLayer, new MavlinkFactory())
+        { }
+
         public Mavlink_Network(IDataLink linkLayer,IMavlinkEncoder encoder)
         {
             _linkLayer = linkLayer;
@@ -54,6 +59,9 @@ namespace MavlinkStructs
         }
     }
 
+    /// <summary>
+    /// Something that can convert mavlink messages to and from byte arrays
+    /// </summary>
     public interface IMavlinkEncoder
     {
         object Deserialize(byte[] bytes, int offset);

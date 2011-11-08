@@ -18,6 +18,10 @@ namespace MavlinkStructs
 
    public delegate void PacketDecodedEventHandler(object sender, PacketDecodedEventArgs e);
 
+
+/// <summary>
+/// This can send and receive bytes over a mavlink connection. Escaping, CRC etc are all done here
+/// </summary>
    public interface IDataLink
    {
        event PacketDecodedEventHandler PacketDecoded;
@@ -26,6 +30,8 @@ namespace MavlinkStructs
 
    public class Mavlink_Link : IDataLink
     {
+       private Stream ioStream;
+
         private byte[] leftovers;
 
         public UInt32 PacketsReceived { get; private set; }
@@ -36,12 +42,16 @@ namespace MavlinkStructs
 
         public byte packetSequence; // public so it can be manipulated for testing
 
-        public Mavlink_Link()
+        public Mavlink_Link(Stream stream)
         {
+            ioStream = stream;
+            var t = new System.Threading.
+            // todo: start the iostream reveive thread
+
             leftovers = new byte[] { };
         }
 
-        public byte[] SendPacket(byte[] packetData)
+        public void SendPacket(byte[] packetData)
         {
             /*
                * Byte order:
@@ -81,7 +91,7 @@ namespace MavlinkStructs
             outBytes[i + 3] = crc_high;
             outBytes[i + 4] = crc_low;
 
-            return outBytes;
+            ioStream.Write(outBytes, 0, outBytes.Length);
         }
 
 
