@@ -269,7 +269,7 @@ class mavudp(mavfile):
         try:
             data, self.last_address = self.port.recvfrom(300)
         except socket.error as e:
-            if e.errno == 11:
+            if e.errno in [ 11, 35 ]:
                 return ""
             raise
         return data
