@@ -244,7 +244,7 @@ def generate(basename, xml):
     if platform.system() == "Windows":
         os.system ("copy %s %s" % (src, os.path.normpath(dir)))
     else:
-        os.system ("cp %s %s" % (src, os.path.normpath(dir)))
+        os.system ("cp %s/*  %s" % (src, os.path.normpath(dir)))
     
     print("Compiling Assembly")
     if platform.system() == "Windows":
