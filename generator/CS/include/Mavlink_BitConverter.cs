@@ -70,8 +70,8 @@ namespace MavLink
             Array.Copy(bytes, bytesUntilNull, i);
 
             var encoding = new UTF8Encoding();
-            encoding.
-            return encoding.GetString(bytesUntilNull);
+
+            return new string(encoding.GetChars(bytesUntilNull));
         }
 
 //        public static unsafe void CopyToFixed(byte[] source, int sourceOffset, byte* target,

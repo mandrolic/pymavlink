@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Concurrent;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +12,12 @@ namespace MavlinkTest
     {
         private Mavlink_Link _dl;
         private List<byte[]> _decodedPackets;
+        private TestStream _testStream;
 
         private void Setup()
         {
-            _dl = new Mavlink_Link();
+            _testStream = new TestStream();
+            _dl = new Mavlink_Link(_testStream);
             _dl.PacketDecoded += new PacketDecodedEventHandler(_dl_PacketDecoded);
             _decodedPackets = new List<byte[]>();
         }
@@ -32,9 +34,14 @@ namespace MavlinkTest
             Setup();
             var hbBytes = GoodMavlinkHeartbeatPacketData();
             _dl.packetSequence = 0x98; // hack to sync up with the real packet sequence no
-            _dl.AddReadBytes(hbBytes);
+            
+            //_dl.AddReadBytes(hbBytes);
+            _testStream.RxQueue.Enqueue(hbBytes);
+            
             var netPacket =  _decodedPackets[0];
-            var sendBytes = _dl.SendPacket(netPacket);
+            //var sendBytes = _dl.SendPacket(netPacket);
+            _dl.SendPacket(netPacket);
+            var sendBytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
             CollectionAssert.AreEqual(hbBytes, sendBytes);
         }
 
@@ -44,9 +51,15 @@ namespace MavlinkTest
             Setup();
             var packetBytes = VFRHudPacketData();
             _dl.packetSequence = 0xeb; // hack to sync up with the real packet sequence no
-            _dl.AddReadBytes(packetBytes);
+
+            //_dl.AddReadBytes(hbBytes);
+            _testStream.RxQueue.Enqueue(packetBytes);
+            
+            
             var netPacket = _decodedPackets[0];
-            var sendBytes = _dl.SendPacket(netPacket);
+            //var sendBytes = _dl.SendPacket(netPacket);
+            _dl.SendPacket(netPacket);
+            var sendBytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
             CollectionAssert.AreEqual(packetBytes, sendBytes);
         }
 

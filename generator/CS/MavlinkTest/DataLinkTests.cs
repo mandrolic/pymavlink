@@ -12,12 +12,14 @@ namespace MavlinkTest
     {
         private Mavlink_Link _dl;
         private List<byte[]> _decodedPackets;
+        private TestStream _testStream;
 
         private void Setup()
         {
-            _dl = new Mavlink_Link();
+            _testStream = new TestStream();
+            _dl = new Mavlink_Link(_testStream);
             _decodedPackets = new List<byte[]>();
-            _dl.PacketDecoded += new PacketDecodedEventHandler(_dl_PacketDecoded);
+            _dl.PacketDecoded += _dl_PacketDecoded;
         }
 
         void _dl_PacketDecoded(object sender, PacketDecodedEventArgs e)
@@ -30,7 +32,6 @@ namespace MavlinkTest
         public void NoBytesMeansNoPackets()
         {
             Setup();
-            _dl.AddReadBytes(new byte[] { });
             Assert.AreEqual(0,_decodedPackets.Count);
         }
 
@@ -77,7 +78,11 @@ namespace MavlinkTest
         {
             Setup();
             var hb = VFRHudPacketData();
-            _dl.AddReadBytes(hb);
+            
+            
+            //_dl.AddReadBytes(hb);
+
+
             Assert.AreEqual(1, _decodedPackets.Count);
         }
 
@@ -88,8 +93,8 @@ namespace MavlinkTest
             var hb1 = VFRHudPacketData().Take(8).ToArray();
             var hb2 = VFRHudPacketData().Skip(8).ToArray();
 
-            _dl.AddReadBytes(hb1);
-            _dl.AddReadBytes(hb2);
+            //_dl.AddReadBytes(hb1);
+            //_dl.AddReadBytes(hb2);
             Assert.AreEqual(1, _decodedPackets.Count);
         }
 
@@ -98,7 +103,7 @@ namespace MavlinkTest
         {
             Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
-             _dl.AddReadBytes(hb);
+             //_dl.AddReadBytes(hb);
              Assert.AreEqual(1, _decodedPackets.Count);
         }
 
@@ -108,7 +113,7 @@ namespace MavlinkTest
             Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
-            _dl.AddReadBytes(hb);
+            //_dl.AddReadBytes(hb);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
         }
 
@@ -123,9 +128,9 @@ namespace MavlinkTest
             var second = hb.Skip(3).ToArray();
 
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
-            _dl.AddReadBytes(first);
+            //_dl.AddReadBytes(first);
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
-            _dl.AddReadBytes(second);
+            //_dl.AddReadBytes(second);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
         }
 
@@ -138,7 +143,7 @@ namespace MavlinkTest
 
             var ar = first.Concat(hb).ToArray();
 
-            _dl.AddReadBytes(ar);
+            //_dl.AddReadBytes(ar);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
         }
 
@@ -148,7 +153,7 @@ namespace MavlinkTest
             Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             hb[9] = 0; // screw the CRC byte
-            _dl.AddReadBytes(hb);
+            //_dl.AddReadBytes(hb);
             Assert.AreEqual((UInt16)0, _decodedPackets.Count);
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
             Assert.AreEqual((UInt16)1, _dl.BadCrcPacketsReceived);
@@ -162,9 +167,9 @@ namespace MavlinkTest
             
             var badCrcPacket = GoodMavlinkHeartbeatPacketData();
             badCrcPacket[9] = 0; // screw the CRC byte
-            _dl.AddReadBytes(badCrcPacket);
+            //_dl.AddReadBytes(badCrcPacket);
 
-            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
 
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
@@ -177,7 +182,8 @@ namespace MavlinkTest
             Setup();
 
             var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray();
-            _dl.AddReadBytes(multipacket);
+            _testStream.RxQueue.Enqueue(multipacket);
+            //_dl.AddReadBytes(multipacket);
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
@@ -191,7 +197,7 @@ namespace MavlinkTest
             var xs = GoodMavlinkHeartbeatPacketData().Select(b => new byte[] { b });
 
             foreach (var oneByteArray in xs )
-                _dl.AddReadBytes(oneByteArray);
+                _testStream.RxQueue.Enqueue(oneByteArray);
 
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)0, _dl.BadCrcPacketsReceived);
@@ -204,9 +210,8 @@ namespace MavlinkTest
 
             var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray().Select(b => new byte[] { b });
 
-
             foreach (var oneByteArray in multipacket)
-                _dl.AddReadBytes(oneByteArray);
+                _testStream.RxQueue.Enqueue(oneByteArray);
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
@@ -219,13 +224,17 @@ namespace MavlinkTest
             Setup();
 
             var firstAndPartSecond = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData().Take(21)).ToArray();
-            _dl.AddReadBytes(firstAndPartSecond);
+            //_dl.AddReadBytes(firstAndPartSecond);
+            _testStream.RxQueue.Enqueue(firstAndPartSecond);
 
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
             Assert.AreEqual((UInt16)0, _dl.BadCrcPacketsReceived);
 
-            _dl.AddReadBytes(VFRHudPacketData().Skip(21).ToArray());
+            byte[] newlyReceived = VFRHudPacketData().Skip(21).ToArray();
+            //_dl.AddReadBytes(newlyReceived);
+            _testStream.RxQueue.Enqueue(newlyReceived);
+
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
@@ -237,7 +246,8 @@ namespace MavlinkTest
         public void HeartBeatPacketIsPassedUpCorrectlyLenghthwise()
         {
             Setup();
-            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
+//            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
             var packet= _decodedPackets[0];
             Assert.AreEqual(6,packet.Length );
         }
@@ -247,7 +257,9 @@ namespace MavlinkTest
         public void HeartBeatPacketIsPassedUpContentwise()
         {
             Setup();
-            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
+
             var packet= _decodedPackets[0];
             Assert.AreEqual(0x07, packet[0]);
             Assert.AreEqual(0x01, packet[1]);

@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Text;
+using System.Collections.Generic;
 using System.IO;
-using System.Collections;
+using System.Linq;
+using System.Threading;
 
 namespace MavlinkStructs
 {
@@ -15,7 +16,6 @@ namespace MavlinkStructs
         public byte [] Payload;
     }
 
-
    public delegate void PacketDecodedEventHandler(object sender, PacketDecodedEventArgs e);
 
 
@@ -25,12 +25,12 @@ namespace MavlinkStructs
    public interface IDataLink
    {
        event PacketDecodedEventHandler PacketDecoded;
-       byte[] SendPacket(byte[] packetData);
+       void SendPacket(byte[] packetData);
    }
 
    public class Mavlink_Link : IDataLink
     {
-       private Stream ioStream;
+       private Stream _ioStream;
 
         private byte[] leftovers;
 
@@ -41,14 +41,34 @@ namespace MavlinkStructs
 
 
         public byte packetSequence; // public so it can be manipulated for testing
+       private Thread _receiveThread;
 
-        public Mavlink_Link(Stream stream)
-        {
-            ioStream = stream;
-            var t = new System.Threading.
-            // todo: start the iostream reveive thread
+     
+
+       public Mavlink_Link(Stream stream)
+       {
+         
+
+           _ioStream = stream;
+
+            _receiveThread = new Thread(ReceiveBytes);
+           _receiveThread.IsBackground = true;
+           _receiveThread.Start();
 
             leftovers = new byte[] { };
+        }
+
+        public void ReceiveBytes()
+        {
+            // todo; graceful thread cancellation etc
+
+            byte[] inbuf;
+            while (true)
+            {
+                inbuf = new byte[4];
+                _ioStream.Read(inbuf, 0, inbuf.Length);
+                AddReadBytes(inbuf);
+            }
         }
 
         public void SendPacket(byte[] packetData)
@@ -91,7 +111,7 @@ namespace MavlinkStructs
             outBytes[i + 3] = crc_high;
             outBytes[i + 4] = crc_low;
 
-            ioStream.Write(outBytes, 0, outBytes.Length);
+            _ioStream.Write(outBytes, 0, outBytes.Length);
         }
 
 
@@ -99,8 +119,7 @@ namespace MavlinkStructs
         /// <summary>
         /// Process latest bytes from the stream
         /// </summary>
-        /// <param name="newBytes">Latest bytes received</param>
-        public void AddReadBytes(byte[] newlyReceived)
+        private void AddReadBytes(byte[] newlyReceived)
         {
             uint i = 0;
 
