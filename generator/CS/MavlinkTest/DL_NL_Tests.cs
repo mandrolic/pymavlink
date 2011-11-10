@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MavlinkStructs;
 using MavLink;
@@ -53,9 +54,8 @@ namespace MavlinkTest
         public void DecodedGoodPacketRaisesReceivedEvent()
         {
             Setup();
-            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
-
+            Thread.Sleep(100);
             Assert.AreEqual(1, packetsRxed.Count);
         }
 
@@ -143,6 +143,7 @@ namespace MavlinkTest
 
             //_dl.AddReadBytes(dlbytes);
             _testStream.RxQueue.Enqueue(dlbytes);
+            Thread.Sleep(100);
 
 
             Assert.AreEqual(1, packetsRxed.Count);
@@ -180,6 +181,7 @@ namespace MavlinkTest
 
             //_dl.AddReadBytes(dlbytes);
             _testStream.RxQueue.Enqueue(dlbytes);
+            Thread.Sleep(100);
 
 
             Assert.AreEqual(1, packetsRxed.Count);
@@ -216,6 +218,7 @@ namespace MavlinkTest
 
             //_dl.AddReadBytes(dlbytes);
             _testStream.RxQueue.Enqueue(dlbytes);
+            Thread.Sleep(100);
 
 
             Assert.AreEqual(1, packetsRxed.Count);

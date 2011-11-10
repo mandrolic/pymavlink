@@ -2,6 +2,7 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MavlinkStructs;
 
@@ -27,6 +28,11 @@ namespace MavlinkTest
             _decodedPackets.Add(e.Payload);
         }
 
+        private void AddReadBytes(byte[] hb)
+        {
+            _testStream.RxQueue.Enqueue(hb);
+            Thread.Sleep(100);
+        }
 
         [TestMethod]
         public void NoBytesMeansNoPackets()
@@ -80,7 +86,7 @@ namespace MavlinkTest
             var hb = VFRHudPacketData();
             
             
-            //_dl.AddReadBytes(hb);
+            AddReadBytes(hb);
 
 
             Assert.AreEqual(1, _decodedPackets.Count);
@@ -93,8 +99,8 @@ namespace MavlinkTest
             var hb1 = VFRHudPacketData().Take(8).ToArray();
             var hb2 = VFRHudPacketData().Skip(8).ToArray();
 
-            //_dl.AddReadBytes(hb1);
-            //_dl.AddReadBytes(hb2);
+            AddReadBytes(hb1);
+            AddReadBytes(hb2);
             Assert.AreEqual(1, _decodedPackets.Count);
         }
 
@@ -103,7 +109,7 @@ namespace MavlinkTest
         {
             Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
-             //_dl.AddReadBytes(hb);
+             AddReadBytes(hb);
              Assert.AreEqual(1, _decodedPackets.Count);
         }
 
@@ -113,7 +119,7 @@ namespace MavlinkTest
             Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
-            //_dl.AddReadBytes(hb);
+            AddReadBytes(hb);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
         }
 
@@ -128,9 +134,9 @@ namespace MavlinkTest
             var second = hb.Skip(3).ToArray();
 
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
-            //_dl.AddReadBytes(first);
+            AddReadBytes(first);
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
-            //_dl.AddReadBytes(second);
+            AddReadBytes(second);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
         }
 
@@ -143,7 +149,7 @@ namespace MavlinkTest
 
             var ar = first.Concat(hb).ToArray();
 
-            //_dl.AddReadBytes(ar);
+            AddReadBytes(ar);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
         }
 
@@ -153,11 +159,13 @@ namespace MavlinkTest
             Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             hb[9] = 0; // screw the CRC byte
-            //_dl.AddReadBytes(hb);
+            AddReadBytes(hb);
             Assert.AreEqual((UInt16)0, _decodedPackets.Count);
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
             Assert.AreEqual((UInt16)1, _dl.BadCrcPacketsReceived);
         }
+
+       
 
 
         [TestMethod]
@@ -167,9 +175,9 @@ namespace MavlinkTest
             
             var badCrcPacket = GoodMavlinkHeartbeatPacketData();
             badCrcPacket[9] = 0; // screw the CRC byte
-            //_dl.AddReadBytes(badCrcPacket);
+            AddReadBytes(badCrcPacket);
 
-            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            AddReadBytes(GoodMavlinkHeartbeatPacketData());
 
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
@@ -183,7 +191,9 @@ namespace MavlinkTest
 
             var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray();
             _testStream.RxQueue.Enqueue(multipacket);
-            //_dl.AddReadBytes(multipacket);
+
+            Thread.Sleep(100);
+            AddReadBytes(multipacket);
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
@@ -196,9 +206,12 @@ namespace MavlinkTest
             Setup();
             var xs = GoodMavlinkHeartbeatPacketData().Select(b => new byte[] { b });
 
-            foreach (var oneByteArray in xs )
+            foreach (var oneByteArray in xs)
+            {
                 _testStream.RxQueue.Enqueue(oneByteArray);
-
+                Thread.Sleep(10);
+                
+            }
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)0, _dl.BadCrcPacketsReceived);
         }
@@ -211,7 +224,12 @@ namespace MavlinkTest
             var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray().Select(b => new byte[] { b });
 
             foreach (var oneByteArray in multipacket)
+            {
                 _testStream.RxQueue.Enqueue(oneByteArray);
+                Thread.Sleep(10);
+                
+            }
+            Thread.Sleep(100);
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
@@ -224,16 +242,19 @@ namespace MavlinkTest
             Setup();
 
             var firstAndPartSecond = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData().Take(21)).ToArray();
-            //_dl.AddReadBytes(firstAndPartSecond);
+            AddReadBytes(firstAndPartSecond);
             _testStream.RxQueue.Enqueue(firstAndPartSecond);
+            Thread.Sleep(100);
+
 
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);
             Assert.AreEqual((UInt16)0, _dl.BadCrcPacketsReceived);
 
             byte[] newlyReceived = VFRHudPacketData().Skip(21).ToArray();
-            //_dl.AddReadBytes(newlyReceived);
+            AddReadBytes(newlyReceived);
             _testStream.RxQueue.Enqueue(newlyReceived);
+            Thread.Sleep(100);
 
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
@@ -257,7 +278,7 @@ namespace MavlinkTest
         public void HeartBeatPacketIsPassedUpContentwise()
         {
             Setup();
-            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            AddReadBytes(GoodMavlinkHeartbeatPacketData());
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
 
             var packet= _decodedPackets[0];
