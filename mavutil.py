@@ -59,7 +59,7 @@ class mavfile(object):
         self.timestamp = 0
         self.message_hooks = []
 
-    def recv(self):
+    def recv(self, n=None):
         '''default recv method'''
         raise RuntimeError('no recv() method supplied')
 
@@ -100,7 +100,8 @@ class mavfile(object):
         '''message receive routine'''
         self.pre_message()
         while True:
-            s = self.recv()
+            n = self.mav.bytes_needed()
+            s = self.recv(n)
             if len(s) == 0 and len(self.mav.buf) == 0:
                 return None
             if self.logfile_raw:
@@ -215,8 +216,9 @@ class mavserial(mavfile):
             fd = None
         mavfile.__init__(self, fd, device, source_system=source_system)
 
-    def recv(self):
-        n = self.mav.bytes_needed()
+    def recv(self,n=None):
+        if n is None:
+            n = self.mav.bytes_needed()
         if self.fd is None:
             waiting = self.port.inWaiting()
             if waiting < n:
@@ -265,7 +267,7 @@ class mavudp(mavfile):
         self.last_address = None
         mavfile.__init__(self, self.port.fileno(), device, source_system=source_system)
 
-    def recv(self):
+    def recv(self,n=None):
         try:
             data, self.last_address = self.port.recvfrom(300)
         except socket.error as e:
@@ -310,9 +312,11 @@ class mavtcp(mavfile):
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         mavfile.__init__(self, self.port.fileno(), device, source_system=source_system)
 
-    def recv(self):
+    def recv(self,n=None):
+        if n is None:
+            n = self.mav.bytes_needed()
         try:
-            data = self.port.recv(300)
+            data = self.port.recv(n)
         except socket.error as e:
             if e.errno in [ 11, 35 ]:
                 return ""
@@ -348,8 +352,10 @@ class mavlogfile(mavfile):
         self.f = open(filename, mode)
         mavfile.__init__(self, None, filename, source_system=source_system)
 
-    def recv(self):
-        return self.f.read(self.mav.bytes_needed())
+    def recv(self,n=None):
+        if n is None:
+            n = self.mav.bytes_needed()
+        return self.f.read(n)
 
     def pre_message(self):
         '''read timestamp if needed'''
@@ -401,7 +407,7 @@ class mavchildexec(mavfile):
 
         mavfile.__init__(self, self.fd, filename, source_system=source_system)
 
-    def recv(self):
+    def recv(self,n=None):
         try:
             x = self.child.stdout.read(1)
         except Exception:
