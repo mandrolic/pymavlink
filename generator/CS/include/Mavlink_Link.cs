@@ -47,8 +47,6 @@ namespace MavlinkStructs
 
        public Mavlink_Link(Stream stream)
        {
-         
-
            _ioStream = stream;
 
             _receiveThread = new Thread(ReceiveBytes);
