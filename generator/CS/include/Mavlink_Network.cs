@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using MavLink;
 
 namespace MavlinkStructs

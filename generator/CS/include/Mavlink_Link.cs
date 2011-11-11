@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 
 namespace MavlinkStructs
@@ -50,7 +48,6 @@ namespace MavlinkStructs
            _ioStream = stream;
 
             _receiveThread = new Thread(ReceiveBytes);
-           _receiveThread.IsBackground = true;
            _receiveThread.Start();
 
             leftovers = new byte[] { };
