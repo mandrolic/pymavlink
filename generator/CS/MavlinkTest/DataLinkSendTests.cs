@@ -2,6 +2,7 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MavlinkStructs;
 
@@ -37,7 +38,9 @@ namespace MavlinkTest
             
             //_dl.AddReadBytes(hbBytes);
             _testStream.RxQueue.Enqueue(hbBytes);
-            
+            Thread.Sleep(200);
+
+
             var netPacket =  _decodedPackets[0];
             //var sendBytes = _dl.SendPacket(netPacket);
             _dl.SendPacket(netPacket);
@@ -54,7 +57,7 @@ namespace MavlinkTest
 
             //_dl.AddReadBytes(hbBytes);
             _testStream.RxQueue.Enqueue(packetBytes);
-            
+            Thread.Sleep(100);
             
             var netPacket = _decodedPackets[0];
             //var sendBytes = _dl.SendPacket(netPacket);

@@ -190,9 +190,6 @@ namespace MavlinkTest
             Setup();
 
             var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray();
-            _testStream.RxQueue.Enqueue(multipacket);
-
-            Thread.Sleep(100);
             AddReadBytes(multipacket);
 
             Assert.AreEqual((UInt16)2, _decodedPackets.Count);
@@ -231,7 +228,7 @@ namespace MavlinkTest
             }
             Thread.Sleep(100);
 
-            Assert.AreEqual((UInt16)2, _decodedPackets.Count);
+            Assert.AreEqual(2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
             Assert.AreEqual((UInt16)0, _dl.BadCrcPacketsReceived);
         }
@@ -243,9 +240,6 @@ namespace MavlinkTest
 
             var firstAndPartSecond = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData().Take(21)).ToArray();
             AddReadBytes(firstAndPartSecond);
-            _testStream.RxQueue.Enqueue(firstAndPartSecond);
-            Thread.Sleep(100);
-
 
             Assert.AreEqual((UInt16)1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)1, _dl.PacketsReceived);

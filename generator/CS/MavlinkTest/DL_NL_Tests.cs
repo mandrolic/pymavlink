@@ -77,7 +77,7 @@ namespace MavlinkTest
             Setup();
             //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
-
+            Thread.Sleep(100);
             Assert.AreEqual(1, packetsRxed[0].ComponentId);
         }
 
