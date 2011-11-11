@@ -15,6 +15,7 @@ import mavutil
 from optparse import OptionParser
 parser = OptionParser("mavtogpx.py [options]")
 parser.add_option("--condition",dest="condition", default=None, help="select packets by a condition")
+parser.add_option("--nofixcheck", default=False, action='store_true', help="don't check for GPS fix")
 (opts, args) = parser.parse_args()
 
 if len(args) < 1:
@@ -64,7 +65,10 @@ def mav_to_gpx(infilename, outfilename):
     while True:
         m = mlog.recv_match(type='GPS_RAW', condition=opts.condition)
         if m is None: break
-        if m.fix_type != 2: continue
+        if m.fix_type != 2 and not opts.nofixcheck:
+            continue
+        if m.lat == 0.0 or m.lon == 0.0:
+            continue
         process_packet(m)
         count += 1
     add_footer()

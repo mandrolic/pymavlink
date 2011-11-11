@@ -1907,6 +1907,19 @@ class MAVLink(object):
                 return m
             return None
 
+        def parse_buffer(self, s):
+            '''input some data bytes, possibly returning a list of new messages'''
+            m = self.parse_char(s)
+            if m is None:
+                return None
+            ret = [m]
+            while True:
+                m = self.parse_char("")
+                if m is None:
+                    return ret
+                ret.append(m)
+            return ret
+
         def decode(self, msgbuf):
                 '''decode a buffer as a MAVLink message'''
                 # decode the header
