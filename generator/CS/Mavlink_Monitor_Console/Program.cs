@@ -16,28 +16,33 @@ namespace Mavlink_Monitor_Console
     {
         static void Main(string[] args)
         {
+            Stream strm = null;
             
-
-            var link = new Mavlink_Link();
-            var net = new Mavlink_Network(link, new MavlinkFactory());
-
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage bla bla");
+                strm = Console.OpenStandardInput();
+            }
+            else if (args.Length == 1)
+            {
+                Console.WriteLine("Usage 'foo -F [File]' OR 'foo -S [com port] [baudrate]' Use no arguments for stdin");
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+            else if (args[0] == "-S" )
+            {
+                var port = new SerialPort("COM7", 57600); // todo parse arge for things
+                port.Open();
+                strm = port.BaseStream;
+            }
+            else
+            {
+                strm = File.OpenRead(args[1]);
+            }
 
-            var port = new SerialPort("COM7", 57600);
-            port.Open();
-            var stream = port.BaseStream;
-
-            //var fileName = args[0];
-            //var bytes = File.ReadAllBytes(fileName);
+            var link = new Mavlink_Link(strm);
+            var net = new Mavlink_Network(link);
 
             var consoledumper = new ConsoleDumper(net);
-
-            link.AddReadBytes(bytes);
 
             Console.ReadKey();
         }
