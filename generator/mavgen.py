@@ -18,7 +18,7 @@ def mavgen(opts, args) :
     import mavgen_c
 
     xml = []
-import mavgen_cs
+    import mavgen_cs
 
     for fname in args:
         print("Parsing %s" % fname)
@@ -56,6 +56,8 @@ import mavgen_cs
         mavgen_python.generate(opts.output, xml)
     elif opts.language == 'C':
         mavgen_c.generate(opts.output, xml)
+    elif opts.language == 'CS':
+        mavgen_cs.generate(opts.output, xml)
     else:
         print("Unsupported language %s" % opts.language)
     
