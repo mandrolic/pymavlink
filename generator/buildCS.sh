@@ -5,6 +5,6 @@ pushd CS/include/
 xbuild Mavlink_Net3_5.csproj
 popd
 
-cd CS/Mavlink_Monitor_Console/
-xbuild Mavlink_Monitor_Console.csproj
+cd CS/mavlogdump/
+xbuild mavlogdump.csproj
 
