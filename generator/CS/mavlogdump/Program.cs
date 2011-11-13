@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
 using MavlinkStructs;
 using System.IO;
 
@@ -14,6 +11,9 @@ namespace Mavlink_Monitor_Console
     /// </summary>
     class Program
     {
+        private const string FileUsage = "mavlogdump.exe -F [File]";
+        private const string SerialUsage = "mavlogdump.exe -S [com port] [baudrate]";
+
         static void Main(string[] args)
         {
             Stream strm = null;
@@ -24,13 +24,20 @@ namespace Mavlink_Monitor_Console
             }
             else if (args.Length == 1)
             {
-                Console.WriteLine("Usage 'foo -F [File]' OR 'foo -S [com port] [baudrate]' Use no arguments for stdin");
+                Console.WriteLine("Usage '" + FileUsage + "' OR '" + SerialUsage + "' Use no arguments for stdin");
                 Console.ReadKey();
                 Environment.Exit(0);
             }
             else if (args[0] == "-S" )
             {
-                var port = new SerialPort("COM7", 57600); // todo parse arge for things
+                if (args.Length != 3)
+                {
+                    Console.WriteLine("Error - argument syntax should be: '" + SerialUsage + "'");
+                    Environment.Exit(1);
+                }
+                var comport = args[1];
+                var baud = Convert.ToInt32(args[2]);
+                var port = new SerialPort(comport, baud); 
                 port.Open();
                 strm = port.BaseStream;
             }
