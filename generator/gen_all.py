@@ -54,7 +54,5 @@ for protocol in protocols :
         args = []
         args.append(xml_file)
         mavgen(opts, args)
-        src = os.path.normpath("CS/include/")
-        dst = os.path.normpath("CS/lib_v" + protocol + "/" + xml_file_base + "/")
-        os.system ("copy %s %s" % (src, dst))
+        
   

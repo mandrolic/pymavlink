@@ -247,11 +247,11 @@ def generate(basename, xml):
     outf.close()
     
     print("Copying DLL project and files")
-    src = os.path.normpath("CS/include")
+    src = os.path.normpath("CS/include/")
     
     print "Command = " + "copy %s %s" % (src, os.path.normpath(dir))
     
-    os.system ("copy %s %s" % (src, dir))
+    os.system ("copy %s %s" % (src, os.path.normpath(dir)))
     
     print("Compiling Assembly")
     msbuild = "%WinDir%\\Microsoft.NET\\Framework\\v3.5\\msbuild.exe"   # This going to be differnt for linux
