@@ -34,11 +34,27 @@ for protocol in protocols :
                        wire_protocol=protocol)
         args = []
         args.append(xml_file)
-        mavgen(opts, args)
+        #mavgen(opts, args)
+        
+        
+        
         xml_file_base = os.path.basename(xml_file)
         xml_file_base = re.sub("\.xml","", xml_file_base)
         print "xml_file_base is", xml_file_base
         opts = options(lang = "python", \
                        output="python/mavlink_"+xml_file_base+"_v"+protocol+".py", \
                        wire_protocol=protocol)
-        mavgen(opts,args)
+        #mavgen(opts,args)
+        
+        
+        
+        print "xml file is ", xml_file
+        csOutputDir = "CS/lib_v" + protocol + "/" + xml_file_base + "/mavlink_messages"
+        opts = options(lang = "CS", output = csOutputDir, wire_protocol=protocol)
+        args = []
+        args.append(xml_file)
+        mavgen(opts, args)
+        src = os.path.normpath("CS/include/")
+        dst = os.path.normpath("CS/lib_v" + protocol + "/" + xml_file_base + "/")
+        os.system ("copy %s %s" % (src, dst))
+  

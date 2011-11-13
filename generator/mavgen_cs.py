@@ -215,7 +215,7 @@ def generate_Serialization(outf, messages):
 			
 			
 def generate(basename, xml):
-    '''generate complete MAVLink C implemenation'''
+    '''generate complete MAVLink CSharp implemenation'''
 
     filename = basename + '.generated.cs'
 
@@ -246,5 +246,15 @@ def generate(basename, xml):
     generate_Serialization(outf, msgs)
     outf.close()
     
+    print("Copying DLL project and files")
+    src = os.path.normpath("CS/include")
+    
+    print "Command = " + "copy %s %s" % (src, os.path.normpath(dir))
+    
+    os.system ("copy %s %s" % (src, dir))
+    
+    print("Compiling Assembly")
+    msbuild = "%WinDir%\\Microsoft.NET\\Framework\\v3.5\\msbuild.exe"   # This going to be differnt for linux
+    os.system ("%s %s" % (msbuild, os.path.normpath(dir + "/Mavlink_Net3_5.csproj")))
     
     print("Generated %s OK" % filename)

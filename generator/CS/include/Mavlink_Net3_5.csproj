@@ -50,9 +50,6 @@
     <Compile Include="mavlink_messages.generated.cs" />
     <Compile Include="mavlink_messages_codec.generated.cs" />
     <Compile Include="Mavlink_Network.cs" />
-    <None Include="2011-09-22 07-00-05.tlog">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
