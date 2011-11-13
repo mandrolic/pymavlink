@@ -5,6 +5,8 @@ namespace MavLink
 {
     public static class ByteArrayUtil
     {
+        private static readonly MavBitConverter bitConverter = new MavBitConverter(); 
+
         public static byte[] ToChar(byte[] source, int sourceOffset, int size)
         {
             var bytes = new byte[size];
@@ -12,6 +14,13 @@ namespace MavLink
             for (int i = 0; i < size; i++)
                 bytes[i] = source[i + sourceOffset];
 
+            return bytes;
+        }
+
+        public static byte[] ToUInt8(byte[] source, int sourceOffset, int size)
+        {
+            var bytes = new byte[size];
+            Array.Copy(source, sourceOffset, bytes, 0, size);
             return bytes;
         }
 
@@ -25,8 +34,71 @@ namespace MavLink
             return bytes;
         }
 
+        public static UInt16[] ToUInt16(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new UInt16[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToUInt16(source, sourceOffset + (i * sizeof (UInt16)));
+            return arr;
+        }
 
-        public static void FromByteArray(byte[] src, byte[] dst, int offset, int size)
+        public static Int16[] ToInt16(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new Int16[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToInt16(source, sourceOffset + (i * sizeof(Int16)));
+            return arr;
+        }
+
+        public static UInt32[] ToUInt32(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new UInt32[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToUInt16(source, sourceOffset + (i * sizeof(UInt32)));
+            return arr;
+        }
+
+        public static Int32[] ToInt32(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new Int32[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToInt16(source, sourceOffset + (i * sizeof(Int32)));
+            return arr;
+        }
+
+        public static UInt64[] ToUInt64(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new UInt64[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToUInt16(source, sourceOffset + (i * sizeof(UInt64)));
+            return arr;
+        }
+
+        public static Int64[] ToInt64(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new Int64[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToInt16(source, sourceOffset + (i * sizeof(Int64)));
+            return arr;
+        }
+
+        public static Single[] ToSingle(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new Single[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToUInt16(source, sourceOffset + (i * sizeof(Single)));
+            return arr;
+        }
+
+        public static Double[] ToDouble(byte[] source, int sourceOffset, int size)
+        {
+            var arr = new Double[size];
+            for (int i = 0; i < size; i++)
+                arr[i] = bitConverter.ToInt16(source, sourceOffset + (i * sizeof(Double)));
+            return arr;
+        }
+
+        public static void ToByteArray(byte[] src, byte[] dst, int offset, int size)
         {
             int i;
             for (i = 0; i < size; i++)
@@ -35,7 +107,7 @@ namespace MavLink
                 dst[offset + i] = 0;
         }
 
-        public static void FromByteArray(sbyte[] src, byte[] dst, int offset, int size)
+        public static void ToByteArray(sbyte[] src, byte[] dst, int offset, int size)
         {
             int i;
             for (i = 0; i < size && i<src.Length; i++)
@@ -43,6 +115,113 @@ namespace MavLink
             while (i++ < size)
                 dst[offset + i] = 0;
         }
+
+        public static void ToByteArray(UInt16[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+            }
+        }
+
+        public static void ToByteArray(Int16[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+            }
+        }
+
+        public static void ToByteArray(UInt32[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+                dst[offset + i + 2] = bs[2];
+                dst[offset + i + 3] = bs[3];
+            }
+        }
+
+        public static void ToByteArray(Int32[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+                dst[offset + i + 2] = bs[2];
+                dst[offset + i + 3] = bs[3];
+             
+            }
+        }
+
+        public static void ToByteArray(Single[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+                dst[offset + i + 2] = bs[2];
+                dst[offset + i + 3] = bs[3];
+
+            }
+        }
+
+        public static void ToByteArray(UInt64[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+                dst[offset + i + 2] = bs[2];
+                dst[offset + i + 3] = bs[3];
+                dst[offset + i + 4] = bs[4];
+                dst[offset + i + 5] = bs[5];
+                dst[offset + i + 6] = bs[6];
+                dst[offset + i + 7] = bs[7];
+            }
+        }
+
+        public static void ToByteArray(Int64[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+                dst[offset + i + 2] = bs[2];
+                dst[offset + i + 3] = bs[3];
+                dst[offset + i + 4] = bs[4];
+                dst[offset + i + 5] = bs[5];
+                dst[offset + i + 6] = bs[6];
+                dst[offset + i + 7] = bs[7];
+            }
+        }
+
+        public static void ToByteArray(Double[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+            {
+                var bs = bitConverter.GetBytes(src[i]);
+                dst[offset + i] = bs[0];
+                dst[offset + i + 1] = bs[1];
+                dst[offset + i + 2] = bs[2];
+                dst[offset + i + 3] = bs[3];
+                dst[offset + i + 4] = bs[4];
+                dst[offset + i + 5] = bs[5];
+                dst[offset + i + 6] = bs[6];
+                dst[offset + i + 7] = bs[7];
+            }
+        }
+
 
         public static sbyte[] FromString(string str)
         {
@@ -73,44 +252,6 @@ namespace MavLink
 
             return new string(encoding.GetChars(bytesUntilNull));
         }
-
-//        public static unsafe void CopyToFixed(byte[] source, int sourceOffset, byte* target,
-//          int targetOffset, int count)
-//        {
-            // If either offset, or the number of bytes to copy, is negative, you
-            // cannot complete the copy.
-//            if ((sourceOffset < 0) || (targetOffset < 0) || (count < 0))
-//                throw new System.ArgumentException();
-//
-//            if (source.Length - sourceOffset < count)
-//                throw new System.ArgumentException();
-//
-//            byte* pt = target + targetOffset;
-//
-            // Copy the specified number of bytes from source to target.
-//            for (int i = 0; i < count; i++)
-//            {
-//                *pt = source[i + sourceOffset];
-//                pt++;
-//            }
-//        }
-
-
-//        public static unsafe string CopyFixedToString(sbyte* source, int maxCount)
-//        {
-//            sbyte* pt = source;
-//            string outStr = string.Empty;
-            // Copy the specified number of bytes from source to target.
-//            for (int i = 0; i < maxCount; i++)
-//            {
-//                outStr = outStr + *pt;
-//                pt++;
-//            }
-//            return outStr;
-//        }
-
-
-       
     }
 
     /// <summary>
@@ -136,13 +277,10 @@ namespace MavLink
             return val;
         }
 
-
         public sbyte ToInt8(byte[] value, int startIndex)
         {
             return unchecked((sbyte)value[startIndex]);
         }
-
-      
 
         public Int32 ToInt32(byte[] value,int startIndex)
         {
@@ -164,7 +302,7 @@ namespace MavLink
 
         public UInt64 ToUInt64(byte[] value, int startIndex)
         {
-            return (UInt32)(
+            return (UInt64)(
                value[7 + startIndex] << 0 |
                value[6 + startIndex] << 8 |
                value[5 + startIndex] << 16 |
@@ -173,7 +311,6 @@ namespace MavLink
                value[2 + startIndex] << 40 |
                value[1 + startIndex] << 48 |
                value[0 + startIndex] << 56);
-
         }
 
         public Int64 ToInt64(byte[] value, int startIndex)
@@ -189,74 +326,69 @@ namespace MavLink
                 value[0 + startIndex] << 56);
         }
 
-        public unsafe float ToSingle(byte[] value, int startIndex)
+        // TODO: This is Host Endianess sensitive
+        public unsafe Single ToSingle(byte[] value, int startIndex)
         {
             Int32 i = ToInt32(value, startIndex);
-            return *(((float*)&i));
+            return *(((Single*)&i));
         }
 
-        public byte[] GetBytes(sbyte value) 
-        { 
-            return new byte[1] 
-                { 
-                    (byte)value, 
-                }; 
+        // TODO: This is Host Endianess sensitive
+        public unsafe Double ToDouble(byte[] value, int startIndex)
+        {
+            Int64 i = ToInt64(value, startIndex);
+            return *(((Double*)&i));
         }
 
-
-
-
-
+        // TODO: This is Host Endianess sensitive
         public unsafe byte[] GetBytes(double value)
         {
             ulong val = *((ulong*)&value);
             return GetBytes(val);
         }
 
+        // TODO: This is Host Endianess sensitive
         public unsafe byte[] GetBytes(float value) 
         {
             UInt32 val = *((UInt32*)&value);
             return GetBytes(val);
         }
 
-      
-       
-
         public byte[] GetBytes(UInt64 value)
         {
-            var bytes = new byte[8] 
-                            { 
-                                (byte)((value >> 56) & 0x000000FF),
-                                (byte)((value >> 48) & 0x000000FF),
-                                (byte)((value >> 40) & 0x000000FF),
-                                (byte)((value >> 32) & 0x000000FF),
-                                (byte)((value >> 24) & 0x000000FF),
-                                (byte)((value >> 16) & 0x000000FF),
-                                (byte)((value >> 8) & 0x000000FF),
-                                (byte)(value & 0x000000FF), 
-                            };
-            return bytes;
+            return new[] 
+                       { 
+                           (byte)((value >> 56) & 0x000000FF),
+                           (byte)((value >> 48) & 0x000000FF),
+                           (byte)((value >> 40) & 0x000000FF),
+                           (byte)((value >> 32) & 0x000000FF),
+                           (byte)((value >> 24) & 0x000000FF),
+                           (byte)((value >> 16) & 0x000000FF),
+                           (byte)((value >> 8) & 0x000000FF),
+                           (byte)(value & 0x000000FF), 
+                       };
         }
 
-        public byte[] GetBytes(Int64 value) {
-            return new byte[8] 
-            { 
-                (byte)((value >> 56) & 0x000000FF),
-                (byte)((value >> 48) & 0x000000FF),
-                (byte)((value >> 40) & 0x000000FF),
-                (byte)((value >> 32) & 0x000000FF),
-                (byte)((value >> 24) & 0x000000FF),
-                (byte)((value >> 16) & 0x000000FF),
-                (byte)((value >> 8) & 0x000000FF),
-                (byte)(value & 0x000000FF), 
-            };
-         }
+        public byte[] GetBytes(Int64 value)
+        {
+            return new[]
+                       {
+                           (byte) ((value >> 56) & 0x000000FF),
+                           (byte) ((value >> 48) & 0x000000FF),
+                           (byte) ((value >> 40) & 0x000000FF),
+                           (byte) ((value >> 32) & 0x000000FF),
+                           (byte) ((value >> 24) & 0x000000FF),
+                           (byte) ((value >> 16) & 0x000000FF),
+                           (byte) ((value >> 8) & 0x000000FF),
+                           (byte) (value & 0x000000FF),
+                       };
+        }
 
-     
+
 
         public byte[] GetBytes(UInt32 value)
         {
-            return new byte[4] 
+            return new[] 
             { 
                 (byte)((value >> 24) & 0xFF),
                 (byte)((value >> 16) & 0xFF),
@@ -267,7 +399,7 @@ namespace MavLink
 
         public byte[] GetBytes(UInt16 value) 
         { 
-            return new byte[2] 
+            return new[] 
             { 
                 (byte)(value >> 8), 
                 (byte)(value & 0xFF) 
@@ -276,11 +408,19 @@ namespace MavLink
 
         public byte[] GetBytes(Int16 value) 
         {
-            return new byte[2] 
+            return new[] 
             { 
                 (byte)(value >> 8), 
                 (byte)(value & 0xFF) 
             }; 
+        }
+
+        public byte[] GetBytes(sbyte value)
+        {
+            return new byte[1] 
+                { 
+                    (byte)value, 
+                };
         }
     }
 }

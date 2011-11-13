@@ -9,6 +9,7 @@ import mavparse, mavtemplate
 
 t = mavtemplate.MAVTemplate()
 
+# todo - refactor this in to the other array
 map = {
         'float'    : 'float',
         'double'   : 'double',
@@ -24,6 +25,22 @@ map = {
         'uint64_t' : 'UInt64',
         }
 
+# Map of field type to bitconverter bytedecoding function, and number of bytes used for the encoding
+mapType = {
+        'float'    : ('ToSingle', 4),
+        'double'   : ('ToDouble', 8),
+        'int8_t'   : ('ToInt8', 1),
+        'uint8_t'   : ('ToUInt8', 1),
+        'char'   :   ('ToChar', 1),
+        'int16_t'  : ('ToInt16', 2),
+        'uint16_t' : ('ToUInt16', 2),
+        'int32_t'  : ('ToInt32', 4),
+        'uint32_t' : ('ToUInt32', 4),
+        'int64_t'  : ('ToInt64', 8),
+        'uint64_t' : ('ToUInt64', 8),
+        }        
+        
+        
 def generate_preamble(outf, msgs, args, xml):
     print("Generating preamble")
     t.write(outf, """
@@ -52,7 +69,7 @@ def generate_enums(outf, enums):
     for e in enums:
         if len(e.description) > 0:
             generate_xmlDocSummary(outf, e.description, 1)
-        outf.write("\tpublic enum %s : byte\n\t{\n" % e.name)
+        outf.write("\tpublic enum %s : ushort\n\t{\n" % e.name)
 
         for entry in e.entry:
             if len(entry.description) > 0:
@@ -117,20 +134,7 @@ Note: this file has been auto-generated. DO NOT EDIT
     
         outf.write("\t\t\tvar obj = new %s();\n" % classname)
         
-        # Map of field type to bitconverter bytedecoding function, and number of bytes used for the encoding
-        mapType = {
-        'float'    : ('ToSingle', 4),
-        'double'   : ('ToDouble', 8),
-        'int8_t'   : ('ToInt8', 1),
-        'uint8_t'   : ('ToUInt8', 1),
-        'char'   :   ('ToChar', 1),
-        'int16_t'  : ('ToInt16', 2),
-        'uint16_t' : ('ToUInt16', 2),
-        'int32_t'  : ('ToInt32', 4),
-        'uint32_t' : ('ToUInt32', 4),
-        'int64_t'  : ('ToInt64', 8),
-        'uint64_t' : ('ToUInt64', 8),
-        }
+       
         
         for f in m.fields:
             if (f.array_length):
@@ -174,28 +178,21 @@ def generate_Serialization(outf, messages):
         offset=0
         
         for f in m.fields:
+        
+            if (f.array_length):
+                outf.write("\t\t\tByteArrayUtil.ToByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
+                offset += f.array_length * mapType[f.type][1]
+                continue
+        
             if (f.type == 'uint8_t'):
-                if (f.array_length):
-                    outf.write("\t\t\tByteArrayUtil.FromByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
-                    offset += f.array_length
-                else:
-                    outf.write("\t\t\tbytes[offset + %s] = msg.%s;\n" % (offset,f.name))
-                    offset+=1
+                outf.write("\t\t\tbytes[offset + %s] = msg.%s;\n" % (offset,f.name))
+                offset+=1
             if (f.type == 'int8_t'):
-                if (f.array_length):
-                    outf.write("\t\t\tByteArrayUtil.FromByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
-                    offset += f.array_length
-                else:
-                    outf.write("\t\t\tbytes[offset + %s] = unchecked((byte)msg.%s);\n" % (offset,f.name))
-                    offset+=1
+                outf.write("\t\t\tbytes[offset + %s] = unchecked((byte)msg.%s);\n" % (offset,f.name))
+                offset+=1
             if (f.type == 'char'):
-                if (f.array_length):
-                    outf.write("\t\t\tByteArrayUtil.FromByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
-                    #outf.write("\t\t\tunsafe {FixedBufferUtil.CopyFromFixed(msg.%s, 0, bytes, offset + %s, %s);}\n" % (f.name,offset,f.array_length))
-                    offset += f.array_length
-                else:
-                    outf.write("\t\t\tbytes[offset + %s] = msg.%s; // todo: check int8_t and char are compatible\n" % (offset,f.name))
-                    offset+=1         
+                outf.write("\t\t\tbytes[offset + %s] = msg.%s; // todo: check int8_t and char are compatible\n" % (offset,f.name))
+                offset+=1         
             if (f.type == 'uint16_t' or f.type == 'int16_t'):
                 outf.write("\t\t\tArray.Copy(bitconverter.GetBytes(msg.%s), 0, bytes, offset + %s, 2);\n" % (f.name,offset))
                 offset+=2
@@ -211,9 +208,8 @@ def generate_Serialization(outf, messages):
         outf.write("\t\t}\n") 
     outf.write("}\n\n")
     outf.write("}\n\n")
-				
-			
-			
+
+    
 def generate(basename, xml):
     '''generate complete MAVLink CSharp implemenation'''
 
