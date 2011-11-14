@@ -241,7 +241,10 @@ def generate(basename, xml):
     
     print "Command = " + "copy %s %s" % (src, os.path.normpath(dir))
     
-    os.system ("copy %s %s" % (src, os.path.normpath(dir)))
+    if platform.system() == "Windows":
+        os.system ("copy %s %s" % (src, os.path.normpath(dir)))
+    else:
+        os.system ("cp %s %s" % (src, os.path.normpath(dir)))
     
     print("Compiling Assembly")
     if platform.system() == "Windows":
