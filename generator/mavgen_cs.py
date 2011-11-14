@@ -4,7 +4,7 @@ parse a MAVLink protocol XML file and generate a CSharp implementation
 
 
 '''
-import sys, textwrap, os, time
+import sys, textwrap, os, time, platform
 import mavparse, mavtemplate
 
 t = mavtemplate.MAVTemplate()
@@ -204,7 +204,9 @@ def generate_Serialization(outf, messages):
     
 def generate(basename, xml):
     '''generate complete MAVLink CSharp implemenation'''
-
+    
+   
+    
     filename = basename + '.generated.cs'
 
     msgs = []
@@ -242,7 +244,11 @@ def generate(basename, xml):
     os.system ("copy %s %s" % (src, os.path.normpath(dir)))
     
     print("Compiling Assembly")
-    msbuild = "%WinDir%\\Microsoft.NET\\Framework\\v3.5\\msbuild.exe"   # This going to be differnt for linux
-    os.system ("%s %s" % (msbuild, os.path.normpath(dir + "/Mavlink_Net3_5.csproj")))
+    if platform.system() == "Windows":
+        msbuildCommand = "%WinDir%\\Microsoft.NET\\Framework\\v3.5\\msbuild.exe"
+    else:
+        msbuildCommand = "xbuild"
+    
+    os.system ("%s %s" % (msbuildCommand, os.path.normpath(dir + "/Mavlink_Net3_5.csproj")))
     
     print("Generated %s OK" % filename)
