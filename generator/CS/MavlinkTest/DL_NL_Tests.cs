@@ -64,9 +64,8 @@ namespace MavlinkTest
         public void SystemIdIsCorrect()
         {
             Setup();
-            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
-
+            Thread.Sleep(100);
             Assert.AreEqual(7, packetsRxed[0].SystemId);
         }
 
@@ -75,7 +74,6 @@ namespace MavlinkTest
         public void ComponentIdIsCorrect()
         {
             Setup();
-            //_dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
             Thread.Sleep(100);
             Assert.AreEqual(1, packetsRxed[0].ComponentId);
@@ -247,12 +245,10 @@ namespace MavlinkTest
             };
 
             var ntbytes = _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
-            //var sendBytes = _dl.SendPacket(netPacket);
             _dl.SendPacket(ntbytes);
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
-
-            //_dl.AddReadBytes(dlbytes);
             _testStream.RxQueue.Enqueue(dlbytes);
+            Thread.Sleep(100);
 
 
             Assert.AreEqual(1, packetsRxed.Count);

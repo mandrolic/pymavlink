@@ -133,9 +133,7 @@ Note: this file has been auto-generated. DO NOT EDIT
         offset = 0
     
         outf.write("\t\t\tvar obj = new %s();\n" % classname)
-        
-       
-        
+
         for f in m.fields:
             if (f.array_length):
                 outf.write("\t\t\tobj.%s =  ByteArrayUtil.%s(bytes, offset + %s, %s);\n" % (f.name, mapType[f.type][0], offset, f.array_length))
@@ -176,37 +174,31 @@ def generate_Serialization(outf, messages):
         outf.write("\n\t\tpublic static int Serialize_%s(byte[] bytes, ref int offset, object obj)\n\t\t{\n" % m.name)
         outf.write("\t\t\tvar msg = (%s)obj;\n\n" % classname)
         offset=0
-        
+       
         for f in m.fields:
         
             if (f.array_length):
-                outf.write("\t\t\tByteArrayUtil.ToByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name,offset,f.array_length))
+                outf.write("\t\t\tByteArrayUtil.ToByteArray(msg.%s, bytes, offset + %s, %s);\n" % (f.name, offset, f.array_length))
                 offset += f.array_length * mapType[f.type][1]
                 continue
-        
+
             if (f.type == 'uint8_t'):
                 outf.write("\t\t\tbytes[offset + %s] = msg.%s;\n" % (offset,f.name))
                 offset+=1
-            if (f.type == 'int8_t'):
+            elif (f.type == 'int8_t'):
                 outf.write("\t\t\tbytes[offset + %s] = unchecked((byte)msg.%s);\n" % (offset,f.name))
                 offset+=1
-            if (f.type == 'char'):
+            elif (f.type == 'char'):
                 outf.write("\t\t\tbytes[offset + %s] = msg.%s; // todo: check int8_t and char are compatible\n" % (offset,f.name))
-                offset+=1         
-            if (f.type == 'uint16_t' or f.type == 'int16_t'):
+                offset+=1
+            else:
                 outf.write("\t\t\tbitconverter.GetBytes(msg.%s, bytes, offset + %s);\n" % (f.name,offset))
-                offset+=2
-            if (f.type == 'uint32_t' or f.type == 'int32_t' or f.type == 'float'):
-                outf.write("\t\t\tbitconverter.GetBytes(msg.%s, bytes, offset + %s);\n" % (f.name,offset))
-                offset+=4
-            if (f.type == 'uint64_t' or f.type == 'int64_t' or f.type == 'double'):
-                outf.write("\t\t\tArray.Copy(bitconverter.GetBytes(msg.%s), 0, bytes, offset + %s, 8);\n" % (f.name,offset))
-                offset+=8
+                offset += mapType[f.type][1]
+          
         outf.write("\t\t\toffset += %s;\n" % offset)
         outf.write("\t\t\treturn %s;\n" % m.id)
-               
         outf.write("\t\t}\n") 
-    outf.write("}\n\n")
+    outf.write("\t}\n\n")
     outf.write("}\n\n")
 
     

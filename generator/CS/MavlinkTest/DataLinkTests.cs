@@ -209,7 +209,7 @@ namespace MavlinkTest
                 Thread.Sleep(10);
                 
             }
-            Assert.AreEqual((UInt16)1, _decodedPackets.Count);
+            Assert.AreEqual(1, _decodedPackets.Count);
             Assert.AreEqual((UInt16)0, _dl.BadCrcPacketsReceived);
         }
 
@@ -226,7 +226,7 @@ namespace MavlinkTest
                 Thread.Sleep(10);
                 
             }
-            Thread.Sleep(100);
+            Thread.Sleep(200);
 
             Assert.AreEqual(2, _decodedPackets.Count);
             Assert.AreEqual((UInt16)2, _dl.PacketsReceived);
@@ -262,7 +262,8 @@ namespace MavlinkTest
         {
             Setup();
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
-//            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            Thread.Sleep(100);
+
             var packet= _decodedPackets[0];
             Assert.AreEqual(6,packet.Length );
         }

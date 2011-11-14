@@ -8,7 +8,6 @@ namespace MavLink
         private static readonly MavBitConverter bitConverter = new MavBitConverter(); 
 
         
-
         public static byte[] ToChar(byte[] source, int sourceOffset, int size)
         {
             var bytes = new byte[size];
@@ -127,97 +126,43 @@ namespace MavLink
         public static void ToByteArray(Int16[] src, byte[] dst, int offset, int size)
         {
             for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-            }
-        }
-
-        public static void ToByteArray(UInt32[] src, byte[] dst, int offset, int size)
-        {
-            for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-                dst[offset + i + 2] = bs[2];
-                dst[offset + i + 3] = bs[3];
-            }
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(Int16)));
         }
 
         public static void ToByteArray(Int32[] src, byte[] dst, int offset, int size)
         {
             for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-                dst[offset + i + 2] = bs[2];
-                dst[offset + i + 3] = bs[3];
-             
-            }
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(Int32)));
+        }
+
+        public static void ToByteArray(UInt32[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(UInt32)));
         }
 
         public static void ToByteArray(Single[] src, byte[] dst, int offset, int size)
         {
             for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-                dst[offset + i + 2] = bs[2];
-                dst[offset + i + 3] = bs[3];
-
-            }
-        }
-
-        public static void ToByteArray(UInt64[] src, byte[] dst, int offset, int size)
-        {
-            for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-                dst[offset + i + 2] = bs[2];
-                dst[offset + i + 3] = bs[3];
-                dst[offset + i + 4] = bs[4];
-                dst[offset + i + 5] = bs[5];
-                dst[offset + i + 6] = bs[6];
-                dst[offset + i + 7] = bs[7];
-            }
-        }
-
-        public static void ToByteArray(Int64[] src, byte[] dst, int offset, int size)
-        {
-            for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-                dst[offset + i + 2] = bs[2];
-                dst[offset + i + 3] = bs[3];
-                dst[offset + i + 4] = bs[4];
-                dst[offset + i + 5] = bs[5];
-                dst[offset + i + 6] = bs[6];
-                dst[offset + i + 7] = bs[7];
-            }
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(Single)));
         }
 
         public static void ToByteArray(Double[] src, byte[] dst, int offset, int size)
         {
             for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-                dst[offset + i + 2] = bs[2];
-                dst[offset + i + 3] = bs[3];
-                dst[offset + i + 4] = bs[4];
-                dst[offset + i + 5] = bs[5];
-                dst[offset + i + 6] = bs[6];
-                dst[offset + i + 7] = bs[7];
-            }
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(Double)));
+        }
+
+        public static void ToByteArray(UInt64[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(UInt64)));
+        }
+
+        public static void ToByteArray(Int64[] src, byte[] dst, int offset, int size)
+        {
+            for (int i = 0; i < size && i < src.Length; i++)
+                bitConverter.GetBytes(src[i], dst, offset + (i * sizeof(Int64)));
         }
 
 
@@ -339,50 +284,42 @@ namespace MavLink
         }
 
         // TODO: This is Host Endianess sensitive
-        public unsafe byte[] GetBytes(double value)
+        public unsafe void GetBytes(Double value, byte[] dst, int offset)
         {
             ulong val = *((ulong*)&value);
-            return GetBytes(val);
+            GetBytes(val, dst, offset);
         }
 
         // TODO: This is Host Endianess sensitive
-        public unsafe byte[] GetBytes(float value) 
+        public unsafe void GetBytes(Single value, byte[] dst, int offset) 
         {
             UInt32 val = *((UInt32*)&value);
-            return GetBytes(val);
+            GetBytes(val, dst, offset);
         }
 
-        public byte[] GetBytes(UInt64 value)
+        public void GetBytes(UInt64 value, byte[] dstArray, int offset)
         {
-            return new[] 
-                       { 
-                           (byte)((value >> 56) & 0x000000FF),
-                           (byte)((value >> 48) & 0x000000FF),
-                           (byte)((value >> 40) & 0x000000FF),
-                           (byte)((value >> 32) & 0x000000FF),
-                           (byte)((value >> 24) & 0x000000FF),
-                           (byte)((value >> 16) & 0x000000FF),
-                           (byte)((value >> 8) & 0x000000FF),
-                           (byte)(value & 0x000000FF), 
-                       };
+            dstArray[offset++] = (byte)((value >> 56) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
+            dstArray[offset] = (byte)(value & 0xFF);
         }
 
-        public byte[] GetBytes(Int64 value)
+        public void GetBytes(Int64 value, byte[] dstArray, int offset)
         {
-            return new[]
-                       {
-                           (byte) ((value >> 56) & 0x000000FF),
-                           (byte) ((value >> 48) & 0x000000FF),
-                           (byte) ((value >> 40) & 0x000000FF),
-                           (byte) ((value >> 32) & 0x000000FF),
-                           (byte) ((value >> 24) & 0x000000FF),
-                           (byte) ((value >> 16) & 0x000000FF),
-                           (byte) ((value >> 8) & 0x000000FF),
-                           (byte) (value & 0x000000FF),
-                       };
+            dstArray[offset++] = (byte)((value >> 56) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
+            dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
+            dstArray[offset] = (byte)(value & 0xFF);
         }
-
-
 
         public void GetBytes(UInt32 value, byte[] dstArray, int offset)
         {
@@ -394,15 +331,12 @@ namespace MavLink
 
         public void GetBytes(Int16 value, byte[] dstArray, int offset)
         {
-
             dstArray[offset] = (byte) (value >> 8); 
             dstArray[offset + 1] = (byte) (value & 0xFF); 
         }
 
-
         public void GetBytes(Int32 value, byte[] dstArray, int offset)
         {
-
             dstArray[offset++] = (byte)(value >> 24);
             dstArray[offset++] = (byte)(value >> 16);
             dstArray[offset++] = (byte)(value >> 8);
@@ -411,20 +345,8 @@ namespace MavLink
 
         public void GetBytes(UInt16 value, byte[] dstArray, int offset)
         {
-
             dstArray[offset] = (byte)(value >> 8);
             dstArray[offset + 1] = (byte)(value & 0xFF);
-        }
-
-
-
-        public byte[] GetBytes(Int16 value)
-        {
-            return new[] 
-            { 
-                (byte)(value >> 8), 
-                (byte)(value & 0xFF) 
-            };
         }
 
         public byte[] GetBytes(sbyte value)
