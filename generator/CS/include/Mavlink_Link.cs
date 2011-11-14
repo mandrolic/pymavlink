@@ -61,8 +61,12 @@ namespace MavlinkStructs
             while (true)
             {
                 inbuf = new byte[4];
-                _ioStream.Read(inbuf, 0, inbuf.Length);
-                AddReadBytes(inbuf);
+                var numBytesRead = _ioStream.Read(inbuf, 0, inbuf.Length);
+                var processBuf = new byte[numBytesRead];
+
+                Array.Copy(inbuf, processBuf, numBytesRead);
+
+                AddReadBytes(processBuf);
             }
         }
 

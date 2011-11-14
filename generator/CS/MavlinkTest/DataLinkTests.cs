@@ -218,7 +218,10 @@ namespace MavlinkTest
         {
             Setup();
 
-            var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray().Select(b => new byte[] { b });
+            var multipacket = GoodMavlinkHeartbeatPacketData()
+                .Concat(VFRHudPacketData())
+                .ToArray()
+                .Select(b => new[] { b });
 
             foreach (var oneByteArray in multipacket)
             {
