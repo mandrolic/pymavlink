@@ -194,10 +194,10 @@ def generate_Serialization(outf, messages):
                 outf.write("\t\t\tbytes[offset + %s] = msg.%s; // todo: check int8_t and char are compatible\n" % (offset,f.name))
                 offset+=1         
             if (f.type == 'uint16_t' or f.type == 'int16_t'):
-                outf.write("\t\t\tArray.Copy(bitconverter.GetBytes(msg.%s), 0, bytes, offset + %s, 2);\n" % (f.name,offset))
+                outf.write("\t\t\tbitconverter.GetBytes(msg.%s, bytes, offset + %s);\n" % (f.name,offset))
                 offset+=2
             if (f.type == 'uint32_t' or f.type == 'int32_t' or f.type == 'float'):
-                outf.write("\t\t\tArray.Copy(bitconverter.GetBytes(msg.%s), 0, bytes, offset + %s, 4);\n" % (f.name,offset))
+                outf.write("\t\t\tbitconverter.GetBytes(msg.%s, bytes, offset + %s);\n" % (f.name,offset))
                 offset+=4
             if (f.type == 'uint64_t' or f.type == 'int64_t' or f.type == 'double'):
                 outf.write("\t\t\tArray.Copy(bitconverter.GetBytes(msg.%s), 0, bytes, offset + %s, 8);\n" % (f.name,offset))

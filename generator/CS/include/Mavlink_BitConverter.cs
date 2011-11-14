@@ -7,6 +7,8 @@ namespace MavLink
     {
         private static readonly MavBitConverter bitConverter = new MavBitConverter(); 
 
+        
+
         public static byte[] ToChar(byte[] source, int sourceOffset, int size)
         {
             var bytes = new byte[size];
@@ -119,11 +121,7 @@ namespace MavLink
         public static void ToByteArray(UInt16[] src, byte[] dst, int offset, int size)
         {
             for (int i = 0; i < size && i < src.Length; i++)
-            {
-                var bs = bitConverter.GetBytes(src[i]);
-                dst[offset + i] = bs[0];
-                dst[offset + i + 1] = bs[1];
-            }
+                bitConverter.GetBytes(src[i], dst, offset + (i*sizeof (UInt16)));
         }
 
         public static void ToByteArray(Int16[] src, byte[] dst, int offset, int size)
@@ -386,33 +384,47 @@ namespace MavLink
 
 
 
-        public byte[] GetBytes(UInt32 value)
+        public void GetBytes(UInt32 value, byte[] dstArray, int offset)
+        {
+            dstArray[offset++] = (byte)(value >> 24);
+            dstArray[offset++] = (byte)(value >> 16);
+            dstArray[offset++] = (byte)(value >> 8);
+            dstArray[offset] = (byte)(value & 0xFF);
+        }
+
+        public void GetBytes(Int16 value, byte[] dstArray, int offset)
+        {
+
+            dstArray[offset] = (byte) (value >> 8); 
+            dstArray[offset + 1] = (byte) (value & 0xFF); 
+        }
+
+
+        public void GetBytes(Int32 value, byte[] dstArray, int offset)
+        {
+
+            dstArray[offset++] = (byte)(value >> 24);
+            dstArray[offset++] = (byte)(value >> 16);
+            dstArray[offset++] = (byte)(value >> 8);
+            dstArray[offset] = (byte)(value & 0xFF);
+        }
+
+        public void GetBytes(UInt16 value, byte[] dstArray, int offset)
+        {
+
+            dstArray[offset] = (byte)(value >> 8);
+            dstArray[offset + 1] = (byte)(value & 0xFF);
+        }
+
+
+
+        public byte[] GetBytes(Int16 value)
         {
             return new[] 
             { 
-                (byte)((value >> 24) & 0xFF),
-                (byte)((value >> 16) & 0xFF),
-                (byte)((value >> 8) & 0xFF),
-                (byte)(value & 0xFF), 
+                (byte)(value >> 8), 
+                (byte)(value & 0xFF) 
             };
-        }
-
-        public byte[] GetBytes(UInt16 value) 
-        { 
-            return new[] 
-            { 
-                (byte)(value >> 8), 
-                (byte)(value & 0xFF) 
-            }; 
-        }
-
-        public byte[] GetBytes(Int16 value) 
-        {
-            return new[] 
-            { 
-                (byte)(value >> 8), 
-                (byte)(value & 0xFF) 
-            }; 
         }
 
         public byte[] GetBytes(sbyte value)
