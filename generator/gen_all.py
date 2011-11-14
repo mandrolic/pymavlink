@@ -34,7 +34,7 @@ for protocol in protocols :
                        wire_protocol=protocol)
         args = []
         args.append(xml_file)
-        #mavgen(opts, args)
+        mavgen(opts, args)
         
         
         
@@ -44,7 +44,7 @@ for protocol in protocols :
         opts = options(lang = "python", \
                        output="python/mavlink_"+xml_file_base+"_v"+protocol+".py", \
                        wire_protocol=protocol)
-        #mavgen(opts,args)
+        mavgen(opts,args)
         
         
         
