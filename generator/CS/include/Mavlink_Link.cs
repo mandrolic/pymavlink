@@ -28,9 +28,10 @@ namespace MavlinkStructs
 
    public class Mavlink_Link : IDataLink
     {
-       private Stream _ioStream;
-
-        private byte[] leftovers;
+       private readonly Stream _ioStream;
+       //private volatile bool stopThread;
+       private bool stopThread; // no volatile in uFramework
+       private byte[] _leftovers;
 
         public UInt32 PacketsReceived { get; private set; }
         public UInt32 BadCrcPacketsReceived { get; private set; }
@@ -39,29 +40,49 @@ namespace MavlinkStructs
 
 
         public byte packetSequence; // public so it can be manipulated for testing
-       private Thread _receiveThread;
+       private readonly Thread _receiveThread;
 
-     
+
 
        public Mavlink_Link(Stream stream)
        {
            _ioStream = stream;
+           _receiveThread = new Thread(ReceiveBytes);
+           _leftovers = new byte[] {};
+       }
 
-            _receiveThread = new Thread(ReceiveBytes);
+
+       public void Start()
+       {
            _receiveThread.Start();
+       }
 
-            leftovers = new byte[] { };
-        }
+       public void Stop()
+       {
+           stopThread = true;
+           var timeoutMs = 500;
+           if (!_receiveThread.Join(timeoutMs))
+               _receiveThread.Abort();
+       }
 
-        public void ReceiveBytes()
+       public void ReceiveBytes()
         {
-            // todo; graceful thread cancellation etc
-
             byte[] inbuf;
-            while (true)
+
+            while (stopThread == false)
             {
                 inbuf = new byte[4];
-                var numBytesRead = _ioStream.Read(inbuf, 0, inbuf.Length);
+
+                int numBytesRead;
+                try
+                {
+                    numBytesRead = _ioStream.Read(inbuf, 0, inbuf.Length);
+                }
+                catch(Exception e) // todo: what is this exception?
+                {
+                    break;
+                }
+
                 var processBuf = new byte[numBytesRead];
 
                 Array.Copy(inbuf, processBuf, numBytesRead);
@@ -124,11 +145,11 @@ namespace MavlinkStructs
 
             // copy the old and new into a contiguous array
             // This is pretty inefficient...
-            var bytesToProcess = new byte[newlyReceived.Length + leftovers.Length];
+            var bytesToProcess = new byte[newlyReceived.Length + _leftovers.Length];
             int j = 0;
 
-            for (i = 0; i < leftovers.Length; i++)
-                bytesToProcess[j++] = leftovers[i];
+            for (i = 0; i < _leftovers.Length; i++)
+                bytesToProcess[j++] = _leftovers[i];
 
             for (i = 0; i < newlyReceived.Length; i++)
                 bytesToProcess[j++] = newlyReceived[i];
@@ -147,7 +168,7 @@ namespace MavlinkStructs
                 if (i == bytesToProcess.Length)
                 {
                     // No start byte found in all our bytes. Exit.
-                    leftovers = new byte[] { };
+                    _leftovers = new byte[] { };
                     return;
                 }
 
@@ -155,10 +176,10 @@ namespace MavlinkStructs
                 // The minimum packet length is 8 bytes for acknowledgement packets without payload
                 if (bytesToProcess.Length - i < 8)
                 {
-                    leftovers = new byte[bytesToProcess.Length - i];
+                    _leftovers = new byte[bytesToProcess.Length - i];
                     j = 0;
                     while (i < bytesToProcess.Length)
-                        leftovers[j++] = bytesToProcess[i++];
+                        _leftovers[j++] = bytesToProcess[i++];
                     return;
                 }
 
@@ -184,11 +205,11 @@ namespace MavlinkStructs
                     // back up to the start char for next cycle
                     j = 0;
 
-                    leftovers = new byte[bytesToProcess.Length - i];
+                    _leftovers = new byte[bytesToProcess.Length - i];
 
                     for (; i < bytesToProcess.Length; i++)
                     {
-                        leftovers[j++] = bytesToProcess[i];
+                        _leftovers[j++] = bytesToProcess[i];
                     }
                     return;
                 }

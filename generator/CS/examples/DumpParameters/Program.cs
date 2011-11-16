@@ -32,11 +32,12 @@ namespace DumpParameters
 
             hbReceived = new ManualResetEvent(false);
             net.PacketReceived += NetPacketReceived;
-
+            link.Start();
             Console.WriteLine("Waiting For hearbeat (10 second timeout)...");
             if (!hbReceived.WaitOne(TimeSpan.FromSeconds(10)))
             {
                 Console.WriteLine("No heartbeats found");
+                link.Stop();
                 Environment.Exit(1);
             }
 
@@ -68,7 +69,8 @@ namespace DumpParameters
 
             
             Console.ReadKey();
-
+            link.Stop();
+            mavStream.Close();
         }
 
         private static void DumpParamPacket(object sender, MavlinkPacket e)
