@@ -5,6 +5,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using MavLink;
 using MavlinkStructs;
 
 namespace DumpParameters
@@ -19,7 +20,8 @@ namespace DumpParameters
      */
     class Program
     {
-        private static int discoveredSystemId;
+        private static byte discoveredSystemId;
+        private static byte discoveredCompId;
         private static ManualResetEvent hbReceived;
 
         static void Main(string[] args)
@@ -29,7 +31,6 @@ namespace DumpParameters
             var net = new Mavlink_Network(link);
 
             hbReceived = new ManualResetEvent(false);
-            discoveredSystemId = -1;
             net.PacketReceived += NetPacketReceived;
 
             Console.WriteLine("Waiting For hearbeat (10 second timeout)...");
@@ -43,18 +44,54 @@ namespace DumpParameters
 
             if (mavStream.CanWrite)
             {
-                var req = new MavLink.MAVLink_param_request_list_message();
+                Console.WriteLine("Sending param list request: " + discoveredSystemId);
 
+                var req = new MavLink.MAVLink_param_request_list_message()
+                              {
+                                  target_system = discoveredSystemId,
+                                  target_component = discoveredCompId,
+                              };
 
+                net.Send(new MavlinkPacket
+                             {
+                                 SystemId = 255,
+                                 ComponentId = 1,
+                                 Message = req
+                             });
+            }
+            else
+            {
+                Console.WriteLine("Cannot send paramlist request. Scanning for params... ");
             }
 
+            net.PacketReceived += DumpParamPacket;
+
+            
+            Console.ReadKey();
+
         }
+
+        private static void DumpParamPacket(object sender, MavlinkPacket e)
+        {
+            if (e.Message is MAVLink_param_value_message)
+            {
+                var p = (MAVLink_param_value_message)e.Message;
+
+                Console.WriteLine("\n\nReceived:");
+                Console.WriteLine("ID: " + ByteArrayUtil.ToString(p.param_id));
+                Console.WriteLine("Value: " + p.param_value);
+                Console.WriteLine("(" + p.param_index + " of " + p.param_count + ")");
+            }
+          
+        }
+
 
         static void NetPacketReceived(object sender, MavlinkPacket e)
         {
             if (e.Message is MavLink.MAVLink_heartbeat_message)
             {
-                discoveredSystemId = e.SystemId;
+                discoveredSystemId = (byte) e.SystemId;
+                discoveredCompId = (byte) e.ComponentId;
                 hbReceived.Set();
             }
         }
