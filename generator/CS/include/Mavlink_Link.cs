@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading;
 
-namespace MavlinkStructs
+namespace Mavlink
 {
    public class PacketDecodedEventArgs
     {

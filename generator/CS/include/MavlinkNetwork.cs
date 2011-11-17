@@ -1,31 +1,21 @@
 ﻿using System;
 using MavLink;
 
-namespace MavlinkStructs
+namespace Mavlink
 {
-    public delegate void PacketReceivedEventHandler(object sender, MavlinkPacket e);
-
-
-    public class MavlinkPacket
+    public class MavlinkNetwork
     {
-        public int SystemId;
-        public int ComponentId;
-        public object Message;
-    }
-
-    public class Mavlink_Network
-    {
-        IDataLink _linkLayer;
-        private IMavlinkEncoder _encoder;
+        private readonly IDataLink _linkLayer;
+        private readonly IMavlinkEncoder _encoder;
 
         public event PacketReceivedEventHandler PacketReceived;
 
-        // TODO: am I ever going to use a different mavlink fsctory. Don't think so must only be for testing
-        public Mavlink_Network(IDataLink linkLayer)
+        // TODO: am I ever going to use a different mavlink factory. Don't think so must only be for testing
+        public MavlinkNetwork(IDataLink linkLayer)
             : this(linkLayer, new MavlinkFactory())
         { }
 
-        public Mavlink_Network(IDataLink linkLayer,IMavlinkEncoder encoder)
+        public MavlinkNetwork(IDataLink linkLayer,IMavlinkEncoder encoder)
         {
             _linkLayer = linkLayer;
             _encoder = encoder;
@@ -93,28 +83,31 @@ namespace MavlinkStructs
             var packetGen = (MavlinkPacketSerializeFunc)MavLink_Serializer.SerializerLookup[message.GetType()];
 
             if (packetGen == null)
-            {
-                //Console.WriteLine("No Serialiser found");
-                return null;
-            }
-            else
-            {
-                var buff = new byte[256];
+                throw new ApplicationException("No serializer found for type " + message.GetType());
 
-                buff[0] = (byte)systemId;
-                buff[1] = (byte)componentId;
+            var buff = new byte[256];
 
-                var endPos = 3;
-                var msgId = packetGen.Invoke(buff, ref endPos, message);
+            buff[0] = (byte)systemId;
+            buff[1] = (byte)componentId;
 
-                buff[2] = (byte)msgId;  
+            var endPos = 3;
+            var msgId = packetGen.Invoke(buff, ref endPos, message);
 
-                var resultBytes = new byte[endPos];
-                Array.Copy(buff, resultBytes, endPos);
+            buff[2] = (byte)msgId;  
 
-                return resultBytes;
-            }
+            var resultBytes = new byte[endPos];
+            Array.Copy(buff, resultBytes, endPos);
+
+            return resultBytes;
         }
     }
 
+    public delegate void PacketReceivedEventHandler(object sender, MavlinkPacket e);
+
+    public class MavlinkPacket
+    {
+        public int SystemId;
+        public int ComponentId;
+        public object Message;
+    }
 }

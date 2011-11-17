@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MavlinkStructs
+namespace Mavlink
 {
     /// <summary>
     /// Crc code copied/adapted from ardumega planner code
