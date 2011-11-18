@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading;
+using System.Reactive.Linq;
 using Mavlink;
 using MavLink;
 
@@ -20,76 +17,71 @@ namespace DumpParameters
      */
     class Program
     {
-        private static byte discoveredSystemId;
-        private static byte discoveredCompId;
-        private static ManualResetEvent hbReceived;
+        private static Stream _mavStream;
+        private static MavlinkNetwork _net;
 
         static void Main(string[] args)
         {
-            var mavStream = ExampleCommon.GetMavStreamFromArgs(args);
-            var link = new Mavlink_Link(mavStream);
-            var net = new MavlinkNetwork(link);
-            var connection = new MavlinkConnection(net, 255, 1);
+            _mavStream = ExampleCommon.GetMavStreamFromArgs(args);
+            var link = new Mavlink_Link(_mavStream);
+            _net = new MavlinkNetwork(link);
 
-            hbReceived = new ManualResetEvent(false);
-            connection.RemoteSystemDetected += SystemDetected;
-            link.Start();
+            var packetsReceived = Observable.FromEvent<PacketReceivedEventHandler, MavlinkPacket>(
+                handler => (sender, e) => handler.Invoke(e),
+                d => _net.PacketReceived += d,
+                d => _net.PacketReceived -= d);
             
+            var heartbeats = packetsReceived.Where(p => p.Message is MAVLink_heartbeat_message);
+
             Console.WriteLine("Waiting For hearbeat (10 second timeout)...");
-            
-            if (!hbReceived.WaitOne(TimeSpan.FromSeconds(10)))
-            {
-                Console.WriteLine("No heartbeats found");
-                link.Stop();
-                Environment.Exit(1);
-            }
 
-            Console.WriteLine("Heartbeat found. System ID: " + discoveredSystemId);
+            var paramsReceived = from hb in heartbeats.Take(1).Do(SendParamListRequest).Timeout(TimeSpan.FromSeconds(10))
+                      from message in packetsReceived
+                          .Where(m => m.SystemId == hb.SystemId)
+                          .Where(m => m.ComponentId == hb.ComponentId)
+                          .Select(p => p.Message)
+                          .OfType<MAVLink_param_value_message>()
+                      select message;
 
-            if (mavStream.CanWrite)
+            var lastParamReceived = paramsReceived.Where(m => m.param_index == m.param_count - 1);
+
+            paramsReceived
+                .TakeUntil(lastParamReceived)
+                .Subscribe(DumpPacket, 
+                        e => { Console.WriteLine("Error: " + e.Message); },
+                        () => { Console.WriteLine("Complete"); });
+
+            link.Start();
+            Console.ReadKey();
+            link.Stop();
+            _mavStream.Close();
+        }
+
+        private static void DumpPacket(MAVLink_param_value_message p)
+        {
+            Console.WriteLine(string.Format("Param - ID: {0} Value: {1} ({2} of {3})", 
+                ByteArrayUtil.ToString(p.param_id), p.param_value, p.param_index,p.param_count));
+        }
+
+
+        private static void SendParamListRequest(MavlinkPacket mavlinkPacket)
+        {
+            if (_mavStream.CanWrite)
             {
-                Console.WriteLine("Sending param list request: " + discoveredSystemId);
+                Console.WriteLine("Sending param list request: " + mavlinkPacket.SystemId);
 
                 var req = new MAVLink_param_request_list_message()
-                              {
-                                  target_system = discoveredSystemId,
-                                  target_component = discoveredCompId,
-                              };
+                {
+                    target_system = (byte) mavlinkPacket.SystemId,
+                    target_component = (byte) mavlinkPacket.ComponentId,
+                };
 
-                connection.Send(req);
+                _net.Send(new MavlinkPacket { ComponentId = 1, SystemId = 255, Message = req });
             }
             else
             {
                 Console.WriteLine("Cannot send paramlist request. Scanning for params... ");
             }
-
-            net.PacketReceived += DumpParamPacket;
-
-            
-            Console.ReadKey();
-            link.Stop();
-            mavStream.Close();
-        }
-
-        private static void DumpParamPacket(object sender, MavlinkPacket e)
-        {
-            if (e.Message is MAVLink_param_value_message)
-            {
-                var p = (MAVLink_param_value_message)e.Message;
-
-                Console.WriteLine("\n\nReceived:");
-                Console.WriteLine("ID: " + ByteArrayUtil.ToString(p.param_id));
-                Console.WriteLine("Value: " + p.param_value);
-                Console.WriteLine("(" + p.param_index + " of " + p.param_count + ")");
-            }
-          
-        }
-
-
-        static void SystemDetected(object sender, MAVLink_heartbeat_message hb)
-        {
-                discoveredSystemId =  (byte) ((MavlinkConnection) sender).TargetSystemId;
-                hbReceived.Set();
         }
     }
 
