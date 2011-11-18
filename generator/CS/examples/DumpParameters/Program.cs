@@ -5,8 +5,8 @@ using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Mavlink;
 using MavLink;
-using MavlinkStructs;
 
 namespace DumpParameters
 {
@@ -28,12 +28,15 @@ namespace DumpParameters
         {
             var mavStream = ExampleCommon.GetMavStreamFromArgs(args);
             var link = new Mavlink_Link(mavStream);
-            var net = new Mavlink_Network(link);
+            var net = new MavlinkNetwork(link);
+            var connection = new MavlinkConnection(net, 255, 1);
 
             hbReceived = new ManualResetEvent(false);
-            net.PacketReceived += NetPacketReceived;
+            connection.RemoteSystemDetected += SystemDetected;
             link.Start();
+            
             Console.WriteLine("Waiting For hearbeat (10 second timeout)...");
+            
             if (!hbReceived.WaitOne(TimeSpan.FromSeconds(10)))
             {
                 Console.WriteLine("No heartbeats found");
@@ -47,18 +50,13 @@ namespace DumpParameters
             {
                 Console.WriteLine("Sending param list request: " + discoveredSystemId);
 
-                var req = new MavLink.MAVLink_param_request_list_message()
+                var req = new MAVLink_param_request_list_message()
                               {
                                   target_system = discoveredSystemId,
                                   target_component = discoveredCompId,
                               };
 
-                net.Send(new MavlinkPacket
-                             {
-                                 SystemId = 255,
-                                 ComponentId = 1,
-                                 Message = req
-                             });
+                connection.Send(req);
             }
             else
             {
@@ -88,14 +86,10 @@ namespace DumpParameters
         }
 
 
-        static void NetPacketReceived(object sender, MavlinkPacket e)
+        static void SystemDetected(object sender, MAVLink_heartbeat_message hb)
         {
-            if (e.Message is MavLink.MAVLink_heartbeat_message)
-            {
-                discoveredSystemId = (byte) e.SystemId;
-                discoveredCompId = (byte) e.ComponentId;
+                discoveredSystemId =  (byte) ((MavlinkConnection) sender).TargetSystemId;
                 hbReceived.Set();
-            }
         }
     }
 
