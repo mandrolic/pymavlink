@@ -16,7 +16,7 @@ namespace DumpParameters
      * dumped
      * 
      * -F "../../2011-09-22 07-00-05.tlog"
-     * 
+     * -S COM14 57600
      */
     class Program
     {
@@ -83,8 +83,7 @@ namespace DumpParameters
                     target_component = (byte) mavlinkPacket.ComponentId,
                 };
 
-                var bytes = _net.Send(new MavlinkPacket { ComponentId = 1, SystemId = 255, Message = req });
-                _link.SendPacket(bytes);
+                _net.Send(new MavlinkPacket { ComponentId = 1, SystemId = 255, Message = req });
             }
             else
             {

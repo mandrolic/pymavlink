@@ -19,15 +19,16 @@ namespace Mavlink
         {
             _linkLayer = linkLayer;
             _encoder = encoder;
-            _linkLayer.PacketDecoded += new PacketDecodedEventHandler(_linkLayer_PacketDecoded);
+            _linkLayer.PacketDecoded += new PacketDecodedEventHandler(LinkLayerPacketDecoded);
         }
 
-        public byte[] Send(MavlinkPacket mavlinkPacket)
+        public void Send(MavlinkPacket mavlinkPacket)
         {
-            return _encoder.Serialize(mavlinkPacket.Message, mavlinkPacket.SystemId, mavlinkPacket.ComponentId);
+            var bytes = _encoder.Serialize(mavlinkPacket.Message, mavlinkPacket.SystemId, mavlinkPacket.ComponentId);
+            _linkLayer.SendPacket(bytes);
         }
 
-        void _linkLayer_PacketDecoded(object sender, PacketDecodedEventArgs e)
+        void LinkLayerPacketDecoded(object sender, PacketDecodedEventArgs e)
         {
             //	 System ID	 1 - 255
             //	 Component ID	 0 - 255
