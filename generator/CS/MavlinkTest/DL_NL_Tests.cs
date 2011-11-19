@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Mavlink;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MavlinkStructs;
 using MavLink;
 
 namespace MavlinkTest
@@ -12,26 +12,23 @@ namespace MavlinkTest
     [TestClass]
     public class DataLinkNetworkIntegrationTests
     {
-        private Mavlink_Network _nt;
+        private MavlinkNetwork _nt;
         private Mavlink_Link _dl;
-        private List<MavlinkPacket> packetsRxed;
+        private List<MavlinkPacket> _packetsRxed;
         private TestStream _testStream;
 
-        private void Setup()
+        [TestInitialize]
+        public void Setup()
         {
-            packetsRxed = new List<MavlinkPacket>();
+            _packetsRxed = new List<MavlinkPacket>();
             _testStream = new TestStream();
             _dl = new Mavlink_Link(_testStream);
-            _nt = new Mavlink_Network(_dl, new MavlinkFactory());
-            _nt.PacketReceived += _nt_PacketReceived;
+            _nt = new MavlinkNetwork(_dl, new MavlinkFactory());
+            _nt.PacketReceived += (sender, e) => _packetsRxed.Add(e);
+            _dl.Start();
         }
 
-        void _nt_PacketReceived(object sender, MavlinkPacket e)
-        {
-            packetsRxed.Add(e);
-        }
-
-        private byte[] GoodMavlinkHeartbeatPacketData()
+        private static byte[] GoodMavlinkHeartbeatPacketData()
         {
 
             return new byte[] {
@@ -53,52 +50,47 @@ namespace MavlinkTest
         [TestMethod]
         public void DecodedGoodPacketRaisesReceivedEvent()
         {
-            Setup();
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
             Thread.Sleep(100);
-            Assert.AreEqual(1, packetsRxed.Count);
+            Assert.AreEqual(1, _packetsRxed.Count);
         }
 
 
         [TestMethod]
         public void SystemIdIsCorrect()
         {
-            Setup();
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
             Thread.Sleep(100);
-            Assert.AreEqual(7, packetsRxed[0].SystemId);
+            Assert.AreEqual(7, _packetsRxed[0].SystemId);
         }
 
 
         [TestMethod]
         public void ComponentIdIsCorrect()
         {
-            Setup();
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
             Thread.Sleep(100);
-            Assert.AreEqual(1, packetsRxed[0].ComponentId);
+            Assert.AreEqual(1, _packetsRxed[0].ComponentId);
         }
 
         [TestMethod]
         public void HeartBeatSerialisation()
         {
-            Setup();
-
             _dl.packetSequence = 0x98; // hack to sync up with the real packet sequence no
 
-            var packet = new MavLink.MAVLink_heartbeat_message { autopilot=3, type=0, mavlink_version=2 };
+            var packet = new MAVLink_heartbeat_message { autopilot=3, type=0, mavlink_version=2 };
             var ntbytes = _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
             //var sendBytes = _dl.SendPacket(netPacket);
             _dl.SendPacket(ntbytes);
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
 
-            var hbBytes = this.GoodMavlinkHeartbeatPacketData();
+            var hbBytes = GoodMavlinkHeartbeatPacketData();
 
             CollectionAssert.AreEqual(hbBytes, dlbytes);
         }
 
 
-        private byte[] VFRHudPacketData()
+        private byte[] VfrHudPacketData()
         {
             return new byte[] {
                 0x55, 
@@ -120,8 +112,6 @@ namespace MavlinkTest
         [TestMethod]
         public void VfrPacketRoundTrip()
         {
-            Setup();
-
             _dl.packetSequence = 0xeb; // hack to sync up with the real packet sequence no
 
             var packet = new MAVLink_vfr_hud_message
@@ -144,9 +134,9 @@ namespace MavlinkTest
             Thread.Sleep(100);
 
 
-            Assert.AreEqual(1, packetsRxed.Count);
+            Assert.AreEqual(1, _packetsRxed.Count);
 
-            var mavPacket = packetsRxed[0];
+            var mavPacket = _packetsRxed[0];
             Assert.AreEqual(7, mavPacket.SystemId);
             Assert.AreEqual(1, mavPacket.ComponentId);
 
@@ -160,10 +150,8 @@ namespace MavlinkTest
         }
        
         [TestMethod]
-        public void RoundTrip_MAVLink_scaled_pressure_message()
+        public void RoundTripMavLinkScaledPressureMessage()
         {
-            Setup();
-
             var packet = new MAVLink_scaled_pressure_message
             {
                 usec = 123456UL,
@@ -182,9 +170,9 @@ namespace MavlinkTest
             Thread.Sleep(100);
 
 
-            Assert.AreEqual(1, packetsRxed.Count);
+            Assert.AreEqual(1, _packetsRxed.Count);
 
-            var mavPacket = packetsRxed[0];
+            var mavPacket = _packetsRxed[0];
 
             Assert.IsInstanceOfType(mavPacket.Message, typeof(MAVLink_scaled_pressure_message));
 
@@ -199,10 +187,8 @@ namespace MavlinkTest
 
          
         [TestMethod]
-        public void RoundTrip_MAVLink_statustext_message()
+        public void RoundTripMavLinkStatustextMessage()
         {
-            Setup();
-
             var packet = new MAVLink_statustext_message
             {
                severity = 1,
@@ -219,9 +205,9 @@ namespace MavlinkTest
             Thread.Sleep(100);
 
 
-            Assert.AreEqual(1, packetsRxed.Count);
+            Assert.AreEqual(1, _packetsRxed.Count);
 
-            var mavPacket = packetsRxed[0];
+            var mavPacket = _packetsRxed[0];
 
             var msg = (MAVLink_statustext_message)mavPacket.Message;
 
@@ -232,10 +218,8 @@ namespace MavlinkTest
 
 
         [TestMethod]
-        public void RoundTrip_MAVLink_param_value_message()
+        public void RoundTripMavLinkParamValueMessage()
         {
-            Setup();
-
             var packet = new MAVLink_param_value_message
             {
                 param_count = 3,
@@ -251,9 +235,9 @@ namespace MavlinkTest
             Thread.Sleep(100);
 
 
-            Assert.AreEqual(1, packetsRxed.Count);
+            Assert.AreEqual(1, _packetsRxed.Count);
 
-            var mavPacket = packetsRxed[0];
+            var mavPacket = _packetsRxed[0];
 
             var msg = (MAVLink_param_value_message)mavPacket.Message;
 
@@ -265,7 +249,5 @@ namespace MavlinkTest
             Assert.AreEqual(1, msg.param_index);
             Assert.AreEqual(4.4F, msg.param_value);
         }
-        
-        
     }
 }

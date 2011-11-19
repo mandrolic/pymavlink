@@ -3,8 +3,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Mavlink;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MavlinkStructs;
 
 namespace MavlinkTest
 {
@@ -15,17 +15,15 @@ namespace MavlinkTest
         private List<byte[]> _decodedPackets;
         private TestStream _testStream;
 
-        private void Setup()
+
+        [TestInitialize]
+        public void Setup()
         {
             _testStream = new TestStream();
             _dl = new Mavlink_Link(_testStream);
             _decodedPackets = new List<byte[]>();
-            _dl.PacketDecoded += _dl_PacketDecoded;
-        }
-
-        void _dl_PacketDecoded(object sender, PacketDecodedEventArgs e)
-        {
-            _decodedPackets.Add(e.Payload);
+            _dl.PacketDecoded += (sender, e) => _decodedPackets.Add(e.Payload);
+            _dl.Start();
         }
 
         private void AddReadBytes(byte[] hb)
@@ -37,13 +35,11 @@ namespace MavlinkTest
         [TestMethod]
         public void NoBytesMeansNoPackets()
         {
-            Setup();
             Assert.AreEqual(0,_decodedPackets.Count);
         }
 
-        private byte[] GoodMavlinkHeartbeatPacketData()
+        private static byte[] GoodMavlinkHeartbeatPacketData()
         {
-
             return new byte[] {
                 0x55,   // start byte
                 0x03,   // length (of the data, not this packet)
@@ -59,8 +55,7 @@ namespace MavlinkTest
             };
         }
 
-
-        private byte[] VFRHudPacketData()
+        private static byte[] VFRHudPacketData()
         {
             return new byte[] {
                 0x55, 
@@ -80,22 +75,15 @@ namespace MavlinkTest
         }
 
         [TestMethod]
-        public void VFRHudPacketDataPacketIsParsed()
+        public void VfrHudPacketDataPacketIsParsed()
         {
-            Setup();
-            var hb = VFRHudPacketData();
-            
-            
-            AddReadBytes(hb);
-
-
+            AddReadBytes(VFRHudPacketData());
             Assert.AreEqual(1, _decodedPackets.Count);
         }
 
         [TestMethod]
-        public void VFRHudInTwoParts()
+        public void VfrHudInTwoParts()
         {
-            Setup();
             var hb1 = VFRHudPacketData().Take(8).ToArray();
             var hb2 = VFRHudPacketData().Skip(8).ToArray();
 
@@ -107,7 +95,6 @@ namespace MavlinkTest
         [TestMethod]
         public void HeartBeatPacketIsParsed()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
              AddReadBytes(hb);
              Assert.AreEqual(1, _decodedPackets.Count);
@@ -116,7 +103,6 @@ namespace MavlinkTest
         [TestMethod]
         public void PacketRxCountIncreases()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             Assert.AreEqual((UInt16)0, _dl.PacketsReceived);
             AddReadBytes(hb);
@@ -128,7 +114,6 @@ namespace MavlinkTest
         [TestMethod]
         public void FragmentedPacketIsOK()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             var first = hb.Take(3).ToArray();
             var second = hb.Skip(3).ToArray();
@@ -141,9 +126,8 @@ namespace MavlinkTest
         }
 
         [TestMethod]
-        public void LeadingDataIsOK()
+        public void LeadingDataIsOk()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             var first = Enumerable.Repeat((byte)42, 10);
 
@@ -156,7 +140,6 @@ namespace MavlinkTest
         [TestMethod]
         public void BadCrcBytesStopPacketReceived()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             hb[9] = 0; // screw the CRC byte
             AddReadBytes(hb);
@@ -165,14 +148,9 @@ namespace MavlinkTest
             Assert.AreEqual((UInt16)1, _dl.BadCrcPacketsReceived);
         }
 
-       
-
-
         [TestMethod]
         public void CanReceiveAGoodPacketAfterABadCrc()
         {
-            Setup();
-            
             var badCrcPacket = GoodMavlinkHeartbeatPacketData();
             badCrcPacket[9] = 0; // screw the CRC byte
             AddReadBytes(badCrcPacket);
@@ -187,8 +165,6 @@ namespace MavlinkTest
         [TestMethod]
         public void CanReceiveMultiplePacketsInOneHit()
         {
-            Setup();
-
             var multipacket = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData()).ToArray();
             AddReadBytes(multipacket);
 
@@ -200,7 +176,6 @@ namespace MavlinkTest
         [TestMethod]
         public void CanReceivePacketOneByteAtATime()
         {
-            Setup();
             var xs = GoodMavlinkHeartbeatPacketData().Select(b => new byte[] { b });
 
             foreach (var oneByteArray in xs)
@@ -216,8 +191,6 @@ namespace MavlinkTest
         [TestMethod]
         public void CanReceiveMultiplePacketsOneByteAtATime()
         {
-            Setup();
-
             var multipacket = GoodMavlinkHeartbeatPacketData()
                 .Concat(VFRHudPacketData())
                 .ToArray()
@@ -239,8 +212,6 @@ namespace MavlinkTest
         [TestMethod]
         public void CanReceiveMultiplePacketsPartialSecondPacket()
         {
-            Setup();
-
             var firstAndPartSecond = GoodMavlinkHeartbeatPacketData().Concat(VFRHudPacketData().Take(21)).ToArray();
             AddReadBytes(firstAndPartSecond);
 
@@ -263,7 +234,6 @@ namespace MavlinkTest
         [TestMethod]
         public void HeartBeatPacketIsPassedUpCorrectlyLenghthwise()
         {
-            Setup();
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
             Thread.Sleep(100);
 
@@ -275,7 +245,6 @@ namespace MavlinkTest
           [TestMethod]
         public void HeartBeatPacketIsPassedUpContentwise()
         {
-            Setup();
             AddReadBytes(GoodMavlinkHeartbeatPacketData());
             _testStream.RxQueue.Enqueue(GoodMavlinkHeartbeatPacketData());
 
@@ -288,8 +257,6 @@ namespace MavlinkTest
             Assert.AreEqual(0x02, packet[5]);
         }
         
-
-
         // Todo: test bad and good in same packet
     }
 }

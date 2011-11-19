@@ -3,8 +3,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Mavlink;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MavlinkStructs;
 
 namespace MavlinkTest
 {
@@ -15,24 +15,20 @@ namespace MavlinkTest
         private List<byte[]> _decodedPackets;
         private TestStream _testStream;
 
-        private void Setup()
+        [TestInitialize]
+        public void Setup()
         {
             _testStream = new TestStream();
             _dl = new Mavlink_Link(_testStream);
-            _dl.PacketDecoded += new PacketDecodedEventHandler(_dl_PacketDecoded);
+            _dl.PacketDecoded += (sender, e) => _decodedPackets.Add(e.Payload);
             _decodedPackets = new List<byte[]>();
-        }
-
-        void _dl_PacketDecoded(object sender, PacketDecodedEventArgs e)
-        {
-            _decodedPackets.Add(e.Payload);
+            _dl.Start();
         }
 
 
         [TestMethod]
         public void HeartBeatDataRoundTrip()
         {
-            Setup();
             var hbBytes = GoodMavlinkHeartbeatPacketData();
             _dl.packetSequence = 0x98; // hack to sync up with the real packet sequence no
             
@@ -49,9 +45,8 @@ namespace MavlinkTest
         }
 
         [TestMethod]
-        public void VFRHudPacketDataRoundTrip()
+        public void VfrHudPacketDataRoundTrip()
         {
-            Setup();
             var packetBytes = VFRHudPacketData();
             _dl.packetSequence = 0xeb; // hack to sync up with the real packet sequence no
 
@@ -66,9 +61,8 @@ namespace MavlinkTest
             CollectionAssert.AreEqual(packetBytes, sendBytes);
         }
 
-        private byte[] GoodMavlinkHeartbeatPacketData()
+        private static byte[] GoodMavlinkHeartbeatPacketData()
         {
-
             return new byte[] {
                 0x55,   // start byte
                 0x03,   // length (of the data, not this packet)
@@ -103,7 +97,5 @@ namespace MavlinkTest
                 0xee, 0x6f,
             };
         }
-
-      
     }
 }

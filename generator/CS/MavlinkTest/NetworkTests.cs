@@ -2,38 +2,31 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using Mavlink;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MavlinkStructs;
 using Moq;
 using MavLink;
 
 namespace MavlinkTest
 {
-
-
-
     [TestClass]
     public class NetworkTests
     {
-        private Mavlink_Network _nt;
+        private MavlinkNetwork _nt;
         private Mock<IDataLink> dl;
         private List<MavlinkPacket> packetsRxed;
 
-        private void Setup()
+        [TestInitialize]
+        public void Setup()
         {
             dl = new Mock<IDataLink>();
             packetsRxed = new List<MavlinkPacket>();
 
-            _nt = new Mavlink_Network(dl.Object,new MavlinkFactory());
-            _nt.PacketReceived += new PacketReceivedEventHandler(_nt_PacketReceived);
+            _nt = new MavlinkNetwork(dl.Object,new MavlinkFactory());
+            _nt.PacketReceived += (sender, e) => packetsRxed.Add(e);
         }
 
-        void _nt_PacketReceived(object sender, MavlinkPacket e)
-        {
-            packetsRxed.Add(e);
-        }
-
-        private byte[] GoodMavlinkHeartbeatPacketData()
+        private static byte[] GoodMavlinkHeartbeatPacketData()
         {
             return new byte[] {
                 0x07,   // System ID
@@ -45,7 +38,7 @@ namespace MavlinkTest
             };
         }
 
-        private byte[] VFRHudPacketData()
+        private static byte[] VFRHudPacketData()
         {
             return new byte[] {
                 //55 14 eb
@@ -65,7 +58,6 @@ namespace MavlinkTest
         [TestMethod]
         public void VFRHudPacketDataOK()
         {
-            Setup();
             var hb = VFRHudPacketData();
             dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb));
             var fdrPcket = (MAVLink_vfr_hud_message)packetsRxed[0].Message;
@@ -81,7 +73,6 @@ namespace MavlinkTest
         [TestMethod]
         public void DecodedGoodPacketRaisesReceivedEvent()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             dl.Raise(d => d.PacketDecoded += null,this, new PacketDecodedEventArgs(hb));
             Assert.AreEqual(1, packetsRxed.Count);
@@ -90,7 +81,6 @@ namespace MavlinkTest
         [TestMethod]
         public void HeartBeatMessageIsOk()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb));
             var hbPcket = (MAVLink_heartbeat_message)packetsRxed[0].Message;
@@ -104,7 +94,6 @@ namespace MavlinkTest
         [TestMethod]
         public void SystemIdIsCorrect()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             dl.Raise(d => d.PacketDecoded+=null, this,new PacketDecodedEventArgs(hb));
             Assert.AreEqual(7, packetsRxed[0].SystemId);
@@ -114,18 +103,9 @@ namespace MavlinkTest
         [TestMethod]
         public void ComponentIdIsCorrect()
         {
-            Setup();
             var hb = GoodMavlinkHeartbeatPacketData();
             dl.Raise(d => d.PacketDecoded += null, this,new PacketDecodedEventArgs(hb));
             Assert.AreEqual(1, packetsRxed[0].ComponentId);
         }
-
-       
-       
-     
-
-
-
-       
     }
 }
