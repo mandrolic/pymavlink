@@ -54,8 +54,10 @@ namespace DumpDataStream
                                  select message;
 
             paramsReceived
+                .Do(m => Console.WriteLine("Msg rx: " +  m.GetType()))
                 .DoWith<object, MAVLink_gps_status_message>(DumpGpsPacket)
                 .DoWith<object, MAVLink_raw_imu_message>(DumpRawImuPacket)
+                .DoWith<object, MAVLink_attitude_message>(DumpAttitudePacket)
                 .Subscribe(
                         _ => { },
                         e => Console.WriteLine("Error: " + e.Message),
@@ -79,15 +81,20 @@ namespace DumpDataStream
             Console.WriteLine(string.Format("GPS Status message: Visible: {0}", msg.satellites_visible));
         }
 
+        private static void DumpAttitudePacket(MAVLink_attitude_message msg)
+        {
+            Console.WriteLine(string.Format("Attitude message: Pitch: {0}", msg.pitch));
+        }
       
 
         private static void SendRequestDataStreams(MavlinkPacket hb)
         {
+            //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_ALL);
             //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_EXTENDED_STATUS);
             //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_POSITION);
-            //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_EXTRA1);
-            //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_EXTRA2);
-            SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_RAW_SENSORS);
+            //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_EXTRA1); // Attitude on APM
+            SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_EXTRA2);   // VFR Hud on APM
+            //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_RAW_SENSORS);
             //SendRequestDataStream(hb, MAV_DATA_STREAM.MAV_DATA_STREAM_RC_CHANNELS);
         }
 
