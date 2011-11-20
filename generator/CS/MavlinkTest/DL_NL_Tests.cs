@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Mavlink;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MavLink;
 

@@ -128,7 +128,7 @@ Note: this file has been auto-generated. DO NOT EDIT
     outf.write("\n\t\t};\n")
     
     for m in messages:
-        classname="MAVLink_%s_message" % m.name.lower()
+        classname="Msg_%s" % m.name.lower()
         outf.write("\n\t\tpublic static object Deserialize_%s(byte[] bytes, int offset)\n\t\t{\n" % (m.name))
         offset = 0
     
@@ -241,17 +241,25 @@ def generate(basename, xml):
     
     print "Command = " + "copy %s %s" % (src, os.path.normpath(dir))
     
+    # Some build commands depend on the platform - eg MS .NET Windows Vs Mono on Linux
     if platform.system() == "Windows":
         os.system ("copy %s %s" % (src, os.path.normpath(dir)))
-    else:
-        os.system ("cp %s/*  %s" % (src, os.path.normpath(dir)))
-    
-    print("Compiling Assembly")
-    if platform.system() == "Windows":
         msbuildCommand = "%WinDir%\\Microsoft.NET\\Framework\\v3.5\\msbuild.exe"
     else:
+        os.system ("cp %s/*  %s" % (src, os.path.normpath(dir)))
         msbuildCommand = "xbuild"
     
+    # Compile for the 'Normal' .Net framework
+    print("Compiling Assembly for .Net Framework 3.5")
     os.system ("%s %s" % (msbuildCommand, os.path.normpath(dir + "/Mavlink_Net3_5.csproj")))
+    
+    # Compile for the .Net Micro Framework
+    if platform.system() == "Windows":
+        print("Compiling Assembly for .Net Micro Framework 4.1")
+        msbuildCommand = "%WinDir%\\Microsoft.NET\\Framework\\v4.0.30319\\msbuild.exe"
+        os.system ("%s %s" % (msbuildCommand, os.path.normpath(dir + "/Mavlink_uFramework4_1.csproj")))
+    else:
+        print("Skipping Compiling Assembly for .Net Micro Framework 4.1 - Not supported on Mono")
+    
     
     print("Generated %s OK" % filename)

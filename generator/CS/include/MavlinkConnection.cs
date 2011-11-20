@@ -5,7 +5,7 @@ using Microsoft.SPOT;
 using MavLink;
 
 
-namespace Mavlink
+namespace MavLink
 {
     /// <summary>
     /// A connection to a specific Mavlink system

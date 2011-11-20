@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO.Ports;
-using MavlinkStructs;
 using System.IO;
+using MavLink;
 
 namespace Mavlink_Monitor_Console
 {
@@ -47,7 +47,7 @@ namespace Mavlink_Monitor_Console
             }
 
             var link = new Mavlink_Link(strm);
-            var net = new Mavlink_Network(link);
+            var net = new MavlinkNetwork(link);
 
             var consoledumper = new ConsoleDumper(net);
 

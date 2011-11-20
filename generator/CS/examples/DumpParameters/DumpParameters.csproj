@@ -33,8 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mavlink_Net3_5">
-      <HintPath>..\..\lib_v0.9\ardupilotmega\bin\Debug\Mavlink_Net3_5.dll</HintPath>
+    <Reference Include="Mavlink_Net3_5, Version=0.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <HintPath>..\..\lib_v0.9\ardupilotmega\bin\Debug\Framework3_5\Mavlink_Net3_5.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

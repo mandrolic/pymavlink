@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MavlinkStructs;
 using MavLink;
 
 namespace Mavlink_Monitor_Console
@@ -12,11 +11,11 @@ namespace Mavlink_Monitor_Console
     /// </summary>
     public class ConsoleDumper
     {
-        private readonly Mavlink_Network _mavNet;
+        private readonly MavlinkNetwork _mavNet;
 
         private const string DefaultLineFormat = "Sys: {0} Comp: {1} Msg:{2}";
 
-        public ConsoleDumper(Mavlink_Network mavNet)
+        public ConsoleDumper(MavlinkNetwork mavNet)
         {
             _mavNet = mavNet;
             _mavNet.PacketReceived += NetworkLayerPacketReceived;
