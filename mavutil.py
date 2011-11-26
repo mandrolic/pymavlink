@@ -357,6 +357,9 @@ class mavlogfile(mavfile):
             n = self.mav.bytes_needed()
         return self.f.read(n)
 
+    def write(self, buf):
+        self.f.write(buf)
+
     def pre_message(self):
         '''read timestamp if needed'''
         # read the timestamp
