@@ -492,7 +492,7 @@ class SerialPort(object):
             ret += " : " + self.hwid
         return ret
 
-def auto_detect_serial_win32(preferred='*'):
+def auto_detect_serial_win32(preferred_list=['*']):
     '''try to auto-detect serial ports on win32'''
     try:
         import scanwin32
@@ -501,8 +501,9 @@ def auto_detect_serial_win32(preferred='*'):
         return []
     ret = []
     for order, port, desc, hwid in list:
-        if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
-            ret.append(SerialPort(port, description=desc, hwid=hwid))
+        for preferred in preferred_list:
+            if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
+                ret.append(SerialPort(port, description=desc, hwid=hwid))
     if len(ret) > 0:
         return ret
     # now the rest
@@ -513,30 +514,31 @@ def auto_detect_serial_win32(preferred='*'):
 
         
 
-def auto_detect_serial_unix(preferred='*'):
+def auto_detect_serial_unix(preferred_list=['*']):
     '''try to auto-detect serial ports on win32'''
     import glob
-    list = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') + glob.glob('/dev/serial/by-id/*')
+    glist = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') + glob.glob('/dev/serial/by-id/*')
     ret = []
     # try preferred ones first
-    for d in list:
-        if fnmatch.fnmatch(d, preferred):
-            ret.append(SerialPort(d))
+    for d in glist:
+        for preferred in preferred_list:
+            if fnmatch.fnmatch(d, preferred):
+                ret.append(SerialPort(d))
     if len(ret) > 0:
         return ret
     # now the rest
-    for d in list:
+    for d in glist:
         ret.append(SerialPort(d))
     return ret
 
 
 
-def auto_detect_serial(preferred='*'):
+def auto_detect_serial(preferred_list=['*']):
     '''try to auto-detect serial port'''
     # see if 
     if os.name == 'nt':
-        return auto_detect_serial_win32(preferred=preferred)
-    return auto_detect_serial_unix(preferred=preferred)
+        return auto_detect_serial_win32(preferred_list=preferred_list)
+    return auto_detect_serial_unix(preferred_list=preferred_list)
 
 def mode_string_v09(msg):
     '''mode string for 0.9 protocol'''
