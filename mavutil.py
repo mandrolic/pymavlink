@@ -58,6 +58,7 @@ class mavfile(object):
         self.flightmode = "UNKNOWN"
         self.timestamp = 0
         self.message_hooks = []
+        self.idle_hooks = []
 
     def recv(self, n=None):
         '''default recv method'''
@@ -117,6 +118,8 @@ class mavfile(object):
             m = self.recv_msg()
             if m is None:
                 if blocking:
+                    for hook in self.idle_hooks:
+                        hook(self)
                     time.sleep(0.01)
                     continue
                 return None
