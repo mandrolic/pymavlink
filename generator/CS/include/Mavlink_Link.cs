@@ -4,17 +4,36 @@ using System.Threading;
 
 namespace MavLink
 {
-   public class PacketDecodedEventArgs
+   public class PacketDecodedEventArgs : EventArgs
     {
-       public PacketDecodedEventArgs(byte[] payload)
+       public PacketDecodedEventArgs(byte[] payload, byte sequenceNumber)
         {
             Payload = payload;
+           SequenceNumber = sequenceNumber;
         }
 
         public byte [] Payload;
+
+       public byte SequenceNumber;
     }
 
    public delegate void PacketDecodedEventHandler(object sender, PacketDecodedEventArgs e);
+
+
+   public class PacketCRCFailEventArgs : EventArgs
+   {
+       public PacketCRCFailEventArgs(byte[] badPacket)
+       {
+           BadPacket = badPacket;
+       }
+
+       /// <summary>
+       /// The bytes that filed the CRC, including the starting character
+       /// </summary>
+       public byte[] BadPacket;
+   }
+
+   public delegate void PacketCRCFailEventHandler(object sender, PacketCRCFailEventArgs e);
 
 
 /// <summary>
@@ -37,10 +56,11 @@ namespace MavLink
         public UInt32 BadCrcPacketsReceived { get; private set; }
 
         public event PacketDecodedEventHandler PacketDecoded;
+        public event PacketCRCFailEventHandler PacketFailedCRC;
 
 
-        public byte packetSequence; // public so it can be manipulated for testing
-       private readonly Thread _receiveThread;
+        public byte txPacketSequence; // public so it can be manipulated for testing
+        private readonly Thread _receiveThread;
 
 
 
@@ -111,9 +131,9 @@ namespace MavLink
             outBytes[0] = 0x55;
             outBytes[1] = (byte)(packetData.Length-3);  // 3 bytes for sequence, id, msg type which this 
                                                         // layer does not concern itself with
-            outBytes[2] = packetSequence;
+            outBytes[2] = txPacketSequence;
 
-            packetSequence = unchecked(packetSequence++);
+            txPacketSequence = unchecked(txPacketSequence++);
 
             int i;
 
@@ -167,15 +187,27 @@ namespace MavLink
 
                 if (i == bytesToProcess.Length)
                 {
-                    // No start byte found in all our bytes. Exit.
+                    // No start byte found in all our bytes. Dump them, Exit.
                     _leftovers = new byte[] { };
                     return;
+                }
+                
+                if (i > 0)
+                {
+                    // if we get here then are some bytes which this code thinks are 
+                    // not interesting and would be dumped. For diagnostics purposes,
+                    // lets pop these bytes up in an event.
+                    // Todo: this event is not necessary for comms. Surround with some sort of #ifdef
+
+                    // Todo; raise 'useless byts' event
                 }
 
                 // We need at least the minimum length of a packet to process it. 
                 // The minimum packet length is 8 bytes for acknowledgement packets without payload
+                // if we don't have the minimum now, go round again
                 if (bytesToProcess.Length - i < 8)
                 {
+                    // The minimum packet length is 8 bytes for acknowledgement packets without payload
                     _leftovers = new byte[bytesToProcess.Length - i];
                     j = 0;
                     while (i < bytesToProcess.Length)
@@ -198,8 +230,9 @@ namespace MavLink
                  */
                 UInt16 payLoadLength = bytesToProcess[i + 1];
 
-                // If we don't have enough bytes in this packet to satisfy the packet lenghth,
-                // then dump the whole lot in the leftovers and do nothing else
+                // Now we know the packet length, 
+                // If we don't have enough bytes in this packet to satisfy that packet lenghth,
+                // then dump the whole lot in the leftovers and do nothing else - go round again
                 if (payLoadLength > (bytesToProcess.Length - i - 8)) // payload + 'overhead' bytes (crc, system etc)
                 {
                     // back up to the start char for next cycle
@@ -215,7 +248,6 @@ namespace MavLink
                 }
 
                 i++;
-                // The minimum packet length is 8 bytes for acknowledgement packets without payload
 
                 // Check the CRC. Does not include the starting 'U' byte but does include the length
                 var crc1 = Mavlink_Crc.Calculate(bytesToProcess, (UInt16)(i), (UInt16)(payLoadLength + 5));
@@ -226,31 +258,41 @@ namespace MavLink
                 if (bytesToProcess[i + 5 + payLoadLength] == crc_high && bytesToProcess[i + 6 + payLoadLength] == crc_low)
                 {
                     // This is used for data drop outs metrics, not packet windows
-                    // so we should consider this here. No need to pass up to Network layer though
-                    var packetSequence = bytesToProcess[++i];
+                    // so we should consider this here. 
+                    // We pass up to subscribers only as an advisory thing
+                    var rxPacketSequence = bytesToProcess[++i];
                     i++;
                     var packet = new byte[payLoadLength + 3];  // +3 because we are going to send up the sys and comp id and msg type with the data
 
                     for (j = 0; j < packet.Length; j++)
                         packet[j] = bytesToProcess[i + j];
 
-                    OnPacketDecoded(packet);
+                    OnPacketDecoded(packet, rxPacketSequence);
                    
                     // TODO: advance i here by j to avoid unecessary hunting!
+                    // Yeah prob need to do that now
                 }
                 else
                 {
+                    var badBytes = new byte[i + 7 + payLoadLength];
+                    Array.Copy(bytesToProcess, i-1,badBytes, 0, payLoadLength+7);
+
+                    if (PacketFailedCRC!=null)
+                    {
+                        PacketFailedCRC(this, new PacketCRCFailEventArgs(badBytes));
+                    }
+
                     BadCrcPacketsReceived++;
                 }
             }
         }
 
 
-        private void OnPacketDecoded(byte[] packet)
+        private void OnPacketDecoded(byte[] packet, byte sequence)
         {
                 if (PacketDecoded != null)
                 {
-                    PacketDecoded(this, new PacketDecodedEventArgs(packet));
+                    PacketDecoded(this, new PacketDecodedEventArgs(packet, sequence));
                 }
 
                 PacketsReceived++;
