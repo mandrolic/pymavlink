@@ -87,7 +87,7 @@ def generate_classes(outf, msgs):
     for m in msgs:
         if (len(m.description) >0):
             generate_xmlDocSummary(outf, m.description, 1)
-        outf.write("""\tpublic struct MAVLink_%s_message
+        outf.write("""\tpublic struct Msg_%s
     {
 """ % m.name.lower())
     
@@ -119,7 +119,7 @@ Note: this file has been auto-generated. DO NOT EDIT
     outf.write("\tpublic delegate object MavlinkPacketDeserializeFunc(byte[] bytes, int offset);\n\n")
     
     outf.write("\tpublic class MavLink_Deserializer\n\t{\n")
-    outf.write("\t\tpublic static MavBitConverter bitconverter = new MavBitConverter();\n\n")
+    outf.write("\t\tinternal static MavBitConverter bitconverter = new MavBitConverter();\n\n")
    
 # Create the table of deserialization delegates
     outf.write("\t\t public static Hashtable DeserializerLookup = new Hashtable\n\t\t{\n")
@@ -160,17 +160,17 @@ def generate_Serialization(outf, messages):
     outf.write("\t//returns the message ID, offset is advanced by the number of bytes used to serialize\n");
     outf.write("\tpublic delegate int MavlinkPacketSerializeFunc(byte[] bytes, ref int offset, object mavlinkPacket);\n\n")
     outf.write("\tpublic class MavLink_Serializer\n\t{\n")
-    outf.write("\t\tpublic static MavBitConverter bitconverter = new MavBitConverter();\n\n")
+    outf.write("\t\tinternal static MavBitConverter bitconverter = new MavBitConverter();\n\n")
    
 # Create the table of serialization delegates
     outf.write("\t\t public static Hashtable SerializerLookup = new Hashtable\n\t\t{\n")
     for m in messages:
-        classname="MAVLink_%s_message" % m.name.lower()
+        classname="Msg_%s" % m.name.lower()
         outf.write("\n\t\t\t{typeof(%s), new MavlinkPacketSerializeFunc(Serialize_%s)}," % (classname,m.name))
     outf.write("\n\t\t};\n")
     
     for m in messages:
-        classname="MAVLink_%s_message" % m.name.lower()
+        classname="Msg_%s" % m.name.lower()
         outf.write("\n\t\tpublic static int Serialize_%s(byte[] bytes, ref int offset, object obj)\n\t\t{\n" % m.name)
         outf.write("\t\t\tvar msg = (%s)obj;\n\n" % classname)
         offset=0

@@ -17,7 +17,7 @@ namespace MavLink
         private readonly int _srcComponentId;
 
         public delegate void MavConnectionReceivedEventHandler(object sender, object e);
-        public delegate void MavConnectionRemoteSystemDetectedEventHandler(object sender, MAVLink_heartbeat_message hb);
+        public delegate void MavConnectionRemoteSystemDetectedEventHandler(object sender, Msg_heartbeat hb);
 
         public event MavConnectionReceivedEventHandler PacketReceived;
         public event MavConnectionRemoteSystemDetectedEventHandler RemoteSystemDetected;
@@ -38,13 +38,15 @@ namespace MavLink
 
         void mavlinkNetwork_PacketReceived(object sender, MavlinkPacket e)
         {
-            if (e.Message is MAVLink_heartbeat_message)
+            if (e.Message is Msg_heartbeat)
             {
                 if (RemoteSystemDetected != null)
-                    RemoteSystemDetected(this, (MAVLink_heartbeat_message)e.Message);
+                    RemoteSystemDetected(this, (Msg_heartbeat)e.Message);
             }
 
-            if (e.SystemId==_srcSystemId && e.ComponentId==_srcComponentId && PacketReceived!=null)
+            
+            //if (e.SystemId==_srcSystemId && e.ComponentId==_srcComponentId && PacketReceived!=null)
+            if (PacketReceived!=null)
             {
                 PacketReceived(this,e.Message);
             }

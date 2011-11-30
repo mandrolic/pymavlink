@@ -1,27 +1,51 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+#if MF_FRAMEWORK
+using Microsoft.SPOT;
+#endif
 
 namespace MavLink
 {
-   public class PacketDecodedEventArgs : EventArgs
+    /// <summary>
+    /// The array of bytes that was received on the Mavlink link
+    /// </summary>
+    public class PacketDecodedEventArgs 
     {
-       public PacketDecodedEventArgs(byte[] payload, byte sequenceNumber)
+        ///<summary>
+        ///</summary>
+        public PacketDecodedEventArgs(byte[] payload, byte sequenceNumber)
         {
             Payload = payload;
-           SequenceNumber = sequenceNumber;
+            SequenceNumber = sequenceNumber;
         }
 
-        public byte [] Payload;
+        /// <summary>
+        /// The packet payload - ie. the packet starting at SystemID and ending at
+        /// the end of the packet data
+        /// </summary>
+        public readonly byte[] Payload;
 
-       public byte SequenceNumber;
+        /// <summary>
+        /// The sequence number that the packet had (rolling incremented byte)
+        /// </summary>
+        public byte SequenceNumber;
     }
 
+
+   ///<summary>
+   /// Handler for an PacketDecoded Event
+   ///</summary>
    public delegate void PacketDecodedEventHandler(object sender, PacketDecodedEventArgs e);
 
 
-   public class PacketCRCFailEventArgs : EventArgs
+   ///<summary>
+   /// Describes an occurance when a packet fails CRC
+   ///</summary>
+   public class PacketCRCFailEventArgs 
    {
+       ///<summary>
+       ///</summary>
        public PacketCRCFailEventArgs(byte[] badPacket)
        {
            BadPacket = badPacket;
@@ -33,6 +57,9 @@ namespace MavLink
        public byte[] BadPacket;
    }
 
+   ///<summary>
+   /// Handler for an PacketFailedCRC Event
+   ///</summary>
    public delegate void PacketCRCFailEventHandler(object sender, PacketCRCFailEventArgs e);
 
 
@@ -45,6 +72,9 @@ namespace MavLink
        void SendPacket(byte[] packetData);
    }
 
+   ///<summary>
+   /// 
+   ///</summary>
    public class Mavlink_Link : IDataLink
     {
        private readonly Stream _ioStream;
@@ -57,12 +87,11 @@ namespace MavLink
 
         public event PacketDecodedEventHandler PacketDecoded;
         public event PacketCRCFailEventHandler PacketFailedCRC;
+        public event PacketCRCFailEventHandler BytesUnused;
 
 
         public byte txPacketSequence; // public so it can be manipulated for testing
         private readonly Thread _receiveThread;
-
-
 
        public Mavlink_Link(Stream stream)
        {
@@ -155,11 +184,10 @@ namespace MavLink
         }
 
 
-
         /// <summary>
         /// Process latest bytes from the stream
         /// </summary>
-        private void AddReadBytes(byte[] newlyReceived)
+        public void AddReadBytes(byte[] newlyReceived)
         {
             uint i = 0;
 
@@ -199,7 +227,11 @@ namespace MavLink
                     // lets pop these bytes up in an event.
                     // Todo: this event is not necessary for comms. Surround with some sort of #ifdef
 
-                    // Todo; raise 'useless byts' event
+                    var badBytes = new byte[i];
+                    Array.Copy(bytesToProcess, badBytes, (int)i);
+
+                    if (BytesUnused!=null)
+                        BytesUnused(this, new PacketCRCFailEventArgs(badBytes));
                 }
 
                 // We need at least the minimum length of a packet to process it. 
@@ -269,13 +301,14 @@ namespace MavLink
 
                     OnPacketDecoded(packet, rxPacketSequence);
                    
-                    // TODO: advance i here by j to avoid unecessary hunting!
-                    // Yeah prob need to do that now
+                    //  advance i here by j to avoid unecessary hunting
+                    // todo: could advance by j + 2 I think?
+                    i = i + (uint)(j+2);
                 }
                 else
                 {
                     var badBytes = new byte[i + 7 + payLoadLength];
-                    Array.Copy(bytesToProcess, i-1,badBytes, 0, payLoadLength+7);
+                    Array.Copy(bytesToProcess, (int) (i-1), badBytes, 0, payLoadLength + 7);
 
                     if (PacketFailedCRC!=null)
                     {

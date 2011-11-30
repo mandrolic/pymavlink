@@ -2,6 +2,9 @@
 
 namespace MavLink
 {
+    ///<summary>
+    /// Class that will code/decode mavlink packets 
+    ///</summary>
     public class MavlinkNetwork
     {
         private readonly IDataLink _linkLayer;
@@ -104,10 +107,27 @@ namespace MavLink
 
     public delegate void PacketReceivedEventHandler(object sender, MavlinkPacket e);
 
+
+
+    ///<summary>
+    /// Represents a Mavlink message - both the message object itself
+    /// and the identified sending party
+    ///</summary>
     public class MavlinkPacket
     {
+        /// <summary>
+        /// The sender's system ID
+        /// </summary>
         public int SystemId;
+
+        /// <summary>
+        /// The sender's component ID
+        /// </summary>
         public int ComponentId;
+
+        /// <summary>
+        /// Object which is the mavlink message
+        /// </summary>
         public object Message;
     }
 }

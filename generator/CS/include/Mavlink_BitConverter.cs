@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MavLink
 {
-    public static class ByteArrayUtil
+    internal static class ByteArrayUtil
     {
         private static readonly MavBitConverter bitConverter = new MavBitConverter(); 
 
@@ -202,7 +202,7 @@ namespace MavLink
     /// Designed to be (relatively...) host endianess independent (check floats though...)
     /// Mavlink packets are Big Endian <-- Actually I think they changed that for a new version. Better check.
     /// </summary>
-    public class MavBitConverter
+    internal class MavBitConverter
     {
         public UInt16 ToUInt16(byte[] value, int startIndex)
         {
