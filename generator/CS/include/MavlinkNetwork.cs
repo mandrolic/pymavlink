@@ -86,7 +86,7 @@ namespace MavLink
             var packetGen = (MavlinkPacketSerializeFunc)MavLink_Serializer.SerializerLookup[message.GetType()];
 
             if (packetGen == null)
-                throw new ApplicationException("No serializer found for type " + message.GetType());
+                throw new Exception("No serializer found for type " + message.GetType());
 
             var buff = new byte[256];
 

@@ -34,6 +34,7 @@
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="ByteArrayUtil.cs" />
     <Compile Include="MavlinkConnection.cs" />
     <Compile Include="MavlinkNetwork.cs" />
     <Compile Include="Mavlink_BitConverter.cs" />

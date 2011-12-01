@@ -125,10 +125,13 @@ namespace MavLink
     
     public class MavLink_Deserializer
     {
-        internal static MavBitConverter bitconverter = new MavBitConverter();
 #if MF_FRAMEWORK
+        internal static MavBitConverter bitconverter = new MavBitConverter();
+
         public static Hashtable DeserializerLookup = new Hashtable
 #else
+        private static readonly FrameworkBitConverter bitconverter = new FrameworkBitConverter(); 
+
         public static Dictionary<int, object> DeserializerLookup = new Dictionary<int, object>
 #endif
 {""");
@@ -174,11 +177,11 @@ public delegate int MavlinkPacketSerializeFunc(byte[] bytes, ref int offset, obj
 
 public class MavLink_Serializer
     {
-    internal static MavBitConverter bitconverter = new MavBitConverter();
-    
-#if MF_FRAMEWORK
+ #if MF_FRAMEWORK
+        internal static MavBitConverter bitconverter = new MavBitConverter();
         public static Hashtable SerializerLookup = new Hashtable
 #else
+        internal static FrameworkBitConverter bitconverter = new FrameworkBitConverter();
         public static Dictionary<Type, MavlinkPacketSerializeFunc> SerializerLookup = new Dictionary<Type, MavlinkPacketSerializeFunc>
 #endif
 {
