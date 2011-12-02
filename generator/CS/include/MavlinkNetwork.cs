@@ -21,7 +21,8 @@ namespace MavLink
         {
             _linkLayer = linkLayer;
             _encoder = encoder;
-            _linkLayer.PacketDecoded += new PacketDecodedEventHandler(LinkLayerPacketDecoded);
+            _linkLayer.PacketDecoded += (sender, e) => ProcessPacketBytes(e.Payload);
+
         }
 
         public void Send(MavlinkPacket mavlinkPacket)
@@ -30,24 +31,29 @@ namespace MavLink
             _linkLayer.SendPacket(bytes);
         }
 
-        void LinkLayerPacketDecoded(object sender, PacketDecodedEventArgs e)
+        /// <summary>
+        /// Process a raw packet in it's entirety in the given byte array
+        /// if deserialization is successful, then the packetdecoded event will be raised
+        /// </summary>
+        public MavlinkPacket ProcessPacketBytes(byte[] packetBytes)
         {
             //	 System ID	 1 - 255
             //	 Component ID	 0 - 255
             //	 Message ID	 0 - 255
             //6 to (n+6)	 Data	 (0 - 255) bytes
-
-            var packet = new MavlinkPacket();
-            packet.SystemId = e.Payload[0];
-            packet.ComponentId = e.Payload[1];
-
-            packet.Message=_encoder.Deserialize(e.Payload, 2);
+            var packet = new MavlinkPacket
+                             {
+                                 SystemId = packetBytes[0],
+                                 ComponentId = packetBytes[1],
+                                 Message = _encoder.Deserialize(packetBytes, 2)
+                             };
 
             if (PacketReceived != null)
             {
                 PacketReceived(this, packet);
             }
 
+            return packet;
         }
     }
 
