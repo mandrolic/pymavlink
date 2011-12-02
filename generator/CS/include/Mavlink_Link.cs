@@ -10,7 +10,7 @@ namespace MavLink
     /// <summary>
     /// The array of bytes that was received on the Mavlink link
     /// </summary>
-    public class PacketDecodedEventArgs 
+    public class PacketDecodedEventArgs : EventArgs
     {
         ///<summary>
         ///</summary>
@@ -42,7 +42,7 @@ namespace MavLink
    ///<summary>
    /// Describes an occurance when a packet fails CRC
    ///</summary>
-   public class PacketCRCFailEventArgs 
+   public class PacketCRCFailEventArgs : EventArgs
    {
        ///<summary>
        ///</summary>
