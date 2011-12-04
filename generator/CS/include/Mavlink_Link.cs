@@ -14,9 +14,10 @@ namespace MavLink
     {
         ///<summary>
         ///</summary>
-        public PacketDecodedEventArgs(byte[] payload, byte sequenceNumber)
+        public PacketDecodedEventArgs(byte[] payload, byte sequenceNumber, byte[] rawBytes)
         {
             Payload = payload;
+            RawBytes = rawBytes;
             SequenceNumber = sequenceNumber;
         }
 
@@ -25,6 +26,11 @@ namespace MavLink
         /// the end of the packet data
         /// </summary>
         public readonly byte[] Payload;
+
+
+        // At the moment just used 
+        public readonly byte[] RawBytes;
+
 
         /// <summary>
         /// The sequence number that the packet had (rolling incremented byte)
@@ -284,10 +290,10 @@ namespace MavLink
                 // Check the CRC. Does not include the starting 'U' byte but does include the length
                 var crc1 = Mavlink_Crc.Calculate(bytesToProcess, (UInt16)(i), (UInt16)(payLoadLength + 5));
 
-                byte crc_high = (byte)(crc1 & 0xFF);
-                byte crc_low = (byte)(crc1 >> 8);
+                byte crcHigh = (byte)(crc1 & 0xFF);
+                byte crcLow = (byte)(crc1 >> 8);
 
-                if (bytesToProcess[i + 5 + payLoadLength] == crc_high && bytesToProcess[i + 6 + payLoadLength] == crc_low)
+                if (bytesToProcess[i + 5 + payLoadLength] == crcHigh && bytesToProcess[i + 6 + payLoadLength] == crcLow)
                 {
                     // This is used for data drop outs metrics, not packet windows
                     // so we should consider this here. 
@@ -299,7 +305,10 @@ namespace MavLink
                     for (j = 0; j < packet.Length; j++)
                         packet[j] = bytesToProcess[i + j];
 
-                    OnPacketDecoded(packet, rxPacketSequence);
+                    var debugArray = new byte[payLoadLength + 7];
+                    Array.Copy(bytesToProcess, (int) (i - 3), debugArray, 0, debugArray.Length);
+
+                    OnPacketDecoded(packet, rxPacketSequence, debugArray);
                    
                     //  advance i here by j to avoid unecessary hunting
                     // todo: could advance by j + 2 I think?
@@ -321,11 +330,11 @@ namespace MavLink
         }
 
 
-        private void OnPacketDecoded(byte[] packet, byte sequence)
+        private void OnPacketDecoded(byte[] packet, byte sequence, byte[] debugBytes)
         {
                 if (PacketDecoded != null)
                 {
-                    PacketDecoded(this, new PacketDecodedEventArgs(packet, sequence));
+                    PacketDecoded(this, new PacketDecodedEventArgs(packet, sequence, debugBytes));
                 }
 
                 PacketsReceived++;
