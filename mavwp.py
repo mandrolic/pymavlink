@@ -2,7 +2,10 @@
 module for loading/saving waypoints
 '''
 
-import mavlink
+if os.getenv('MAVLINK10'):
+    import mavlinkv10 as mavlink
+else:
+    import mavlink
 
 class MAVWPError(Exception):
         '''MAVLink WP error class'''

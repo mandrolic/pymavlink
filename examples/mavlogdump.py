@@ -12,8 +12,6 @@ import sys, time, os, struct
 # allow import from the parent directory, where mavlink.py is
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
-import mavutil
-
 from optparse import OptionParser
 parser = OptionParser("mavlogdump.py [options]")
 
@@ -24,7 +22,12 @@ parser.add_option("-f", "--follow",dest="follow", action='store_true', help="kee
 parser.add_option("--condition",dest="condition", default=None, help="select packets by condition")
 parser.add_option("-q", "--quiet", dest="quiet", action='store_true', help="don't display packets")
 parser.add_option("--output", default=None, help="output matching packets to give file")
+parser.add_option("--mav10", action='store_true', default=False, help="Use MAVLink protocol 1.0")
 (opts, args) = parser.parse_args()
+
+if opts.mav10:
+    os.environ['MAVLINK10'] = '1'
+import mavutil
 
 if len(args) < 1:
     print("Usage: mavlogdump.py [options] <LOGFILE>")
