@@ -2,6 +2,8 @@
 module for loading/saving waypoints
 '''
 
+import os
+
 if os.getenv('MAVLINK10'):
     import mavlinkv10 as mavlink
 else:
