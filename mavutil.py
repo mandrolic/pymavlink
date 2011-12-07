@@ -6,7 +6,7 @@ Copyright Andrew Tridgell 2011
 Released under GNU GPL version 3 or later
 '''
 
-import socket, math, struct, time, os, fnmatch, array
+import socket, math, struct, time, os, fnmatch, array, sys
 from math import *
 from mavextra import *
 
@@ -58,10 +58,15 @@ class mavfile(object):
         self.flightmode = "UNKNOWN"
         self.timestamp = 0
         self.message_hooks = []
+        self.idle_hooks = []
 
-    def recv(self):
+    def recv(self, n=None):
         '''default recv method'''
         raise RuntimeError('no recv() method supplied')
+
+    def close(self, n=None):
+        '''default close method'''
+        raise RuntimeError('no close() method supplied')
 
     def write(self, buf):
         '''default write method'''
@@ -100,7 +105,8 @@ class mavfile(object):
         '''message receive routine'''
         self.pre_message()
         while True:
-            s = self.recv()
+            n = self.mav.bytes_needed()
+            s = self.recv(n)
             if len(s) == 0 and len(self.mav.buf) == 0:
                 return None
             if self.logfile_raw:
@@ -116,6 +122,8 @@ class mavfile(object):
             m = self.recv_msg()
             if m is None:
                 if blocking:
+                    for hook in self.idle_hooks:
+                        hook(self)
                     time.sleep(0.01)
                     continue
                 return None
@@ -215,8 +223,12 @@ class mavserial(mavfile):
             fd = None
         mavfile.__init__(self, fd, device, source_system=source_system)
 
-    def recv(self):
-        n = self.mav.bytes_needed()
+    def close(self):
+        self.port.close()
+
+    def recv(self,n=None):
+        if n is None:
+            n = self.mav.bytes_needed()
         if self.fd is None:
             waiting = self.port.inWaiting()
             if waiting < n:
@@ -265,11 +277,14 @@ class mavudp(mavfile):
         self.last_address = None
         mavfile.__init__(self, self.port.fileno(), device, source_system=source_system)
 
-    def recv(self):
+    def close(self):
+        self.port.close()
+
+    def recv(self,n=None):
         try:
             data, self.last_address = self.port.recvfrom(300)
         except socket.error as e:
-            if e.errno == 11:
+            if e.errno in [ 11, 35 ]:
                 return ""
             raise
         return data
@@ -310,11 +325,16 @@ class mavtcp(mavfile):
         self.port.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         mavfile.__init__(self, self.port.fileno(), device, source_system=source_system)
 
-    def recv(self):
+    def close(self):
+        self.port.close()
+
+    def recv(self,n=None):
+        if n is None:
+            n = self.mav.bytes_needed()
         try:
-            data = self.port.recv(300)
+            data = self.port.recv(n)
         except socket.error as e:
-            if e.errno == 11:
+            if e.errno in [ 11, 35 ]:
                 return ""
             raise
         return data
@@ -348,8 +368,16 @@ class mavlogfile(mavfile):
         self.f = open(filename, mode)
         mavfile.__init__(self, None, filename, source_system=source_system)
 
-    def recv(self):
-        return self.f.read(self.mav.bytes_needed())
+    def close(self):
+        self.f.close()
+
+    def recv(self,n=None):
+        if n is None:
+            n = self.mav.bytes_needed()
+        return self.f.read(n)
+
+    def write(self, buf):
+        self.f.write(buf)
 
     def pre_message(self):
         '''read timestamp if needed'''
@@ -401,7 +429,10 @@ class mavchildexec(mavfile):
 
         mavfile.__init__(self, self.fd, filename, source_system=source_system)
 
-    def recv(self):
+    def close(self):
+        self.child.close()
+
+    def recv(self,n=None):
         try:
             x = self.child.stdout.read(1)
         except Exception:
@@ -480,7 +511,7 @@ class SerialPort(object):
             ret += " : " + self.hwid
         return ret
 
-def auto_detect_serial_win32(preferred='*'):
+def auto_detect_serial_win32(preferred_list=['*']):
     '''try to auto-detect serial ports on win32'''
     try:
         import scanwin32
@@ -489,8 +520,9 @@ def auto_detect_serial_win32(preferred='*'):
         return []
     ret = []
     for order, port, desc, hwid in list:
-        if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
-            ret.append(SerialPort(port, description=desc, hwid=hwid))
+        for preferred in preferred_list:
+            if fnmatch.fnmatch(desc, preferred) or fnmatch.fnmatch(hwid, preferred):
+                ret.append(SerialPort(port, description=desc, hwid=hwid))
     if len(ret) > 0:
         return ret
     # now the rest
@@ -501,30 +533,31 @@ def auto_detect_serial_win32(preferred='*'):
 
         
 
-def auto_detect_serial_unix(preferred='*'):
+def auto_detect_serial_unix(preferred_list=['*']):
     '''try to auto-detect serial ports on win32'''
     import glob
-    list = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') + glob.glob('/dev/serial/by-id/*')
+    glist = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*') + glob.glob('/dev/serial/by-id/*')
     ret = []
     # try preferred ones first
-    for d in list:
-        if fnmatch.fnmatch(d, preferred):
-            ret.append(SerialPort(d))
+    for d in glist:
+        for preferred in preferred_list:
+            if fnmatch.fnmatch(d, preferred):
+                ret.append(SerialPort(d))
     if len(ret) > 0:
         return ret
     # now the rest
-    for d in list:
+    for d in glist:
         ret.append(SerialPort(d))
     return ret
 
 
 
-def auto_detect_serial(preferred='*'):
+def auto_detect_serial(preferred_list=['*']):
     '''try to auto-detect serial port'''
     # see if 
     if os.name == 'nt':
-        return auto_detect_serial_win32(preferred=preferred)
-    return auto_detect_serial_unix(preferred=preferred)
+        return auto_detect_serial_win32(preferred_list=preferred_list)
+    return auto_detect_serial_unix(preferred_list=preferred_list)
 
 def mode_string_v09(msg):
     '''mode string for 0.9 protocol'''
