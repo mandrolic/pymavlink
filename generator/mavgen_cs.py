@@ -125,13 +125,15 @@ namespace MavLink
     
     public class MavLink_Deserializer
     {
+        public static void SetDataIsLittleEndian(bool isLittle)
+        {
+            bitconverter.SetDataIsLittleEndian(isLittle);
+        }
 #if MF_FRAMEWORK
         internal static MavBitConverter bitconverter = new MavBitConverter();
-
         public static Hashtable DeserializerLookup = new Hashtable
 #else
         private static readonly FrameworkBitConverter bitconverter = new FrameworkBitConverter(); 
-
         public static Dictionary<int, object> DeserializerLookup = new Dictionary<int, object>
 #endif
 {""");
@@ -177,7 +179,11 @@ public delegate int MavlinkPacketSerializeFunc(byte[] bytes, ref int offset, obj
 
 public class MavLink_Serializer
     {
- #if MF_FRAMEWORK
+        public static void SetDataIsLittleEndian(bool isLittle)
+        {
+            bitconverter.SetDataIsLittleEndian(isLittle);
+        }
+#if MF_FRAMEWORK
         internal static MavBitConverter bitconverter = new MavBitConverter();
         public static Hashtable SerializerLookup = new Hashtable
 #else

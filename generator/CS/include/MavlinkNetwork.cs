@@ -14,10 +14,10 @@ namespace MavLink
 
         // TODO: am I ever going to use a different mavlink factory. Don't think so must only be for testing
         public MavlinkNetwork(IDataLink linkLayer)
-            : this(linkLayer, new MavlinkFactory())
+            : this(linkLayer, new MavlinkFactory(false))
         { }
 
-        public MavlinkNetwork(IDataLink linkLayer,IMavlinkEncoder encoder)
+        public MavlinkNetwork(IDataLink linkLayer, IMavlinkEncoder encoder)
         {
             _linkLayer = linkLayer;
             _encoder = encoder;
@@ -69,6 +69,11 @@ namespace MavLink
 
     public class MavlinkFactory : IMavlinkEncoder
     {
+        public MavlinkFactory(bool isLittleEndian)
+        {
+            MavLink_Deserializer.SetDataIsLittleEndian(isLittleEndian);
+        }
+
         public object Deserialize(byte[] bytes, int offset)
         {
             // first byte is the mavlink 
@@ -89,7 +94,7 @@ namespace MavLink
 
         public byte[] Serialize(object message, int systemId, int componentId)
         {
-            var packetGen = (MavlinkPacketSerializeFunc)MavLink_Serializer.SerializerLookup[message.GetType()];
+            var packetGen = MavLink_Serializer.SerializerLookup[message.GetType()];
 
             if (packetGen == null)
                 throw new Exception("No serializer found for type " + message.GetType());
@@ -100,7 +105,7 @@ namespace MavLink
             buff[1] = (byte)componentId;
 
             var endPos = 3;
-            var msgId = packetGen.Invoke(buff, ref endPos, message);
+            var msgId = (packetGen as MavlinkPacketSerializeFunc).Invoke(buff, ref endPos, message);
 
             buff[2] = (byte)msgId;  
 

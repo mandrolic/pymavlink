@@ -9,24 +9,34 @@ namespace MavLink
     /// </summary>
     internal class MavBitConverter
     {
+        private bool _islittle = false;
+
+        public void SetDataIsLittleEndian(bool islittle)
+        {
+            _islittle = islittle;
+        }
+
         public UInt16 ToUInt16(byte[] value, int startIndex)
         {
-            return (UInt16)(
-                 value[1 + startIndex] << 0 |
-                 value[0 + startIndex] << 8);
+            return _islittle
+                       ? (UInt16) (
+                                      value[0 + startIndex] << 0 |
+                                      value[1 + startIndex] << 8)
+                       : (UInt16) (
+                                      value[1 + startIndex] << 0 |
+                                      value[0 + startIndex] << 8);
         }
 
         public Int16 ToInt16(byte[] value, int startIndex)
         {
-            var val= unchecked ((Int16)(
-                value[1 + startIndex] << 0 |
-                value[0 + startIndex] << 8));
-
-            return val;
+            return unchecked ((Int16)(
+                                         value[1 + startIndex] << 0 |
+                                         value[0 + startIndex] << 8));
         }
 
         public sbyte ToInt8(byte[] value, int startIndex)
         {
+
             return unchecked((sbyte)value[startIndex]);
         }
 
