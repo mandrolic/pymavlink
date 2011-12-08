@@ -16,10 +16,28 @@ namespace MavLink
         private readonly int _srcSystemId;
         private readonly int _srcComponentId;
 
+        /// <summary>
+        /// Handler for when packets are received
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public delegate void MavConnectionReceivedEventHandler(object sender, object e);
+
+        /// <summary>
+        /// Handler for when heartbeats are deteceted from remote systems
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="hb"></param>
         public delegate void MavConnectionRemoteSystemDetectedEventHandler(object sender, Msg_heartbeat hb);
 
+        /// <summary>
+        /// event for when packets are received
+        /// </summary>
         public event MavConnectionReceivedEventHandler PacketReceived;
+
+        /// <summary>
+        /// event for when heartbeats are deteceted from remote systems
+        /// </summary>
         public event MavConnectionRemoteSystemDetectedEventHandler RemoteSystemDetected;
 
         /// <summary>
@@ -36,7 +54,7 @@ namespace MavLink
 
       
 
-        void mavlinkNetwork_PacketReceived(object sender, MavlinkPacket e)
+        private void mavlinkNetwork_PacketReceived(object sender, MavlinkPacket e)
         {
             if (e.Message is Msg_heartbeat)
             {
@@ -52,6 +70,10 @@ namespace MavLink
             }
         }
 
+        /// <summary>
+        /// Send a mavlink message through this connection
+        /// </summary>
+        /// <param name="message">the message to send</param>
         public void Send(object message)
         {
             var mvp = new MavlinkPacket

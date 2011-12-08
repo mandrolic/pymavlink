@@ -5,7 +5,7 @@ namespace MavLink
 {
     internal static class ByteArrayUtil
     {
-#if MF_FRAMEWORK
+#if MF_FRAMEWORK_VERSION_V4_1
         private static readonly MavBitConverter bitConverter = new MavBitConverter(); 
 #else
         private static readonly FrameworkBitConverter bitConverter = new FrameworkBitConverter(); 

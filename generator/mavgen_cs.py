@@ -67,8 +67,8 @@ def generate_enums(outf, enums):
     print("Generating enums")
     outf.write("namespace MavLink\n{\n")
     for e in enums:
-        if len(e.description) > 0:
-            generate_xmlDocSummary(outf, e.description, 1)
+            #if len(e.description) > 0:
+        generate_xmlDocSummary(outf, e.description, 1)
         outf.write("\tpublic enum %s : ushort\n\t{\n" % e.name)
 
         for entry in e.entry:
@@ -114,7 +114,7 @@ Note: this file has been auto-generated. DO NOT EDIT
 
 using System;
 using System.Collections;
-#if MF_FRAMEWORK
+#if MF_FRAMEWORK_VERSION_V4_1
 #else
 using System.Collections.Generic;
 #endif
@@ -129,7 +129,7 @@ namespace MavLink
         {
             bitconverter.SetDataIsLittleEndian(isLittle);
         }
-#if MF_FRAMEWORK
+#if MF_FRAMEWORK_VERSION_V4_1
         internal static MavBitConverter bitconverter = new MavBitConverter();
         public static Hashtable DeserializerLookup = new Hashtable
 #else
@@ -144,7 +144,7 @@ namespace MavLink
     
     for m in messages:
         classname="Msg_%s" % m.name.lower()
-        outf.write("\n\t\tpublic static object Deserialize_%s(byte[] bytes, int offset)\n\t\t{\n" % (m.name))
+        outf.write("\n\t\tinternal static object Deserialize_%s(byte[] bytes, int offset)\n\t\t{\n" % (m.name))
         offset = 0
     
         outf.write("\t\t\tvar obj = new %s();\n" % classname)
@@ -183,7 +183,7 @@ public class MavLink_Serializer
         {
             bitconverter.SetDataIsLittleEndian(isLittle);
         }
-#if MF_FRAMEWORK
+#if MF_FRAMEWORK_VERSION_V4_1
         internal static MavBitConverter bitconverter = new MavBitConverter();
         public static Hashtable SerializerLookup = new Hashtable
 #else
@@ -201,7 +201,9 @@ public class MavLink_Serializer
     # Create the table of serialization delegates
     for m in messages:
         classname="Msg_%s" % m.name.lower()
-        outf.write("\n\t\tpublic static int Serialize_%s(byte[] bytes, ref int offset, object obj)\n\t\t{\n" % m.name)
+             
+       
+        outf.write("\n\t\tinternal static int Serialize_%s(byte[] bytes, ref int offset, object obj)\n\t\t{\n" % m.name)
         outf.write("\t\t\tvar msg = (%s)obj;\n\n" % classname)
         offset=0
        

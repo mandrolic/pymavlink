@@ -5,7 +5,6 @@ namespace MavLink
     /// <summary>
     /// Really simple and dumb converter from byte[] => primitive CLR types
     /// Designed to be (relatively...) host endianess independent (check floats though...)
-    /// Mavlink packets are Big Endian <-- Actually I think they changed that for a new version. Better check.
     /// </summary>
     internal class MavBitConverter
     {
@@ -42,11 +41,18 @@ namespace MavLink
 
         public Int32 ToInt32(byte[] value,int startIndex)
         {
-            return unchecked (
-                value[3 + startIndex] << 0 |
-                value[2 + startIndex] << 8 |
-                value[1 + startIndex] << 16 |
-                value[0 + startIndex] << 24);
+            if (_islittle)
+                return unchecked(
+                    value[0 + startIndex] << 0 |
+                    value[1 + startIndex] << 8 |
+                    value[2 + startIndex] << 16 |
+                    value[3 + startIndex] << 24);
+            else
+                return unchecked (
+                    value[3 + startIndex] << 0 |
+                    value[2 + startIndex] << 8 |
+                    value[1 + startIndex] << 16 |
+                    value[0 + startIndex] << 24);
         }
 
         public UInt32 ToUInt32(byte[] value, int startIndex)
@@ -60,6 +66,17 @@ namespace MavLink
 
         public UInt64 ToUInt64(byte[] value, int startIndex)
         {
+            if (_islittle)
+            return (UInt64)(
+               value[0 + startIndex] << 0 |
+               value[1 + startIndex] << 8 |
+               value[2 + startIndex] << 16 |
+               value[3 + startIndex] << 24 |
+               value[4 + startIndex] << 32 |
+               value[5 + startIndex] << 40 |
+               value[6 + startIndex] << 48 |
+               value[7 + startIndex] << 56);
+
             return (UInt64)(
                value[7 + startIndex] << 0 |
                value[6 + startIndex] << 8 |
@@ -73,6 +90,17 @@ namespace MavLink
 
         public Int64 ToInt64(byte[] value, int startIndex)
         {
+            if(_islittle)
+            return unchecked(
+                value[0 + startIndex] << 0 |
+                value[1 + startIndex] << 8 |
+                value[2 + startIndex] << 16 |
+                value[3 + startIndex] << 24 |
+                value[4 + startIndex] << 32 |
+                value[5 + startIndex] << 40 |
+                value[6 + startIndex] << 48 |
+                value[7 + startIndex] << 56);
+
             return unchecked(
                 value[7 + startIndex] << 0 |
                 value[6 + startIndex] << 8 |
@@ -114,54 +142,119 @@ namespace MavLink
 
         public void GetBytes(UInt64 value, byte[] dstArray, int offset)
         {
-            dstArray[offset++] = (byte)((value >> 56) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
-            dstArray[offset] = (byte)(value & 0xFF);
+            if (_islittle)
+            {
+                dstArray[offset++] = (byte)(value & 0xFF);
+                dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
+                dstArray[offset] = (byte)((value >> 56) & 0x000000FF);
+            }
+            else
+            {
+                dstArray[offset++] = (byte)((value >> 56) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
+                dstArray[offset] = (byte)(value & 0xFF);
+            }
         }
 
         public void GetBytes(Int64 value, byte[] dstArray, int offset)
         {
-            dstArray[offset++] = (byte)((value >> 56) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
-            dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
-            dstArray[offset] = (byte)(value & 0xFF);
+            if (_islittle)
+            {
+                dstArray[offset++] = (byte)(value & 0xFF);
+                dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
+                dstArray[offset] = (byte)((value >> 56) & 0x000000FF);
+            }
+            else
+            {
+                dstArray[offset++] = (byte)((value >> 56) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 48) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 40) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 32) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 24) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 16) & 0x000000FF);
+                dstArray[offset++] = (byte)((value >> 8) & 0x000000FF);
+                dstArray[offset] = (byte)(value & 0xFF);
+            }
         }
 
         public void GetBytes(UInt32 value, byte[] dstArray, int offset)
         {
-            dstArray[offset++] = (byte)(value >> 24);
-            dstArray[offset++] = (byte)(value >> 16);
-            dstArray[offset++] = (byte)(value >> 8);
-            dstArray[offset] = (byte)(value & 0xFF);
+            if (_islittle)
+            {
+                dstArray[offset++] = (byte) (value & 0xFF);
+                dstArray[offset++] = (byte) (value >> 8);
+                dstArray[offset++] = (byte) (value >> 16);
+                dstArray[offset++] = (byte) (value >> 24);
+            }
+            else
+            {
+                dstArray[offset++] = (byte) (value >> 24);
+                dstArray[offset++] = (byte) (value >> 16);
+                dstArray[offset++] = (byte) (value >> 8);
+                dstArray[offset] = (byte) (value & 0xFF);
+            }
         }
 
         public void GetBytes(Int16 value, byte[] dstArray, int offset)
         {
-            dstArray[offset] = (byte) (value >> 8); 
-            dstArray[offset + 1] = (byte) (value & 0xFF); 
+            if (_islittle)
+            {
+                dstArray[offset + 1] = (byte)(value >> 8);
+                dstArray[offset] = (byte)(value & 0xFF); 
+            }
+            else
+            {
+                dstArray[offset] = (byte)(value >> 8);
+                dstArray[offset + 1] = (byte)(value & 0xFF);    
+            }
+           
         }
 
         public void GetBytes(Int32 value, byte[] dstArray, int offset)
         {
-            dstArray[offset++] = (byte)(value >> 24);
-            dstArray[offset++] = (byte)(value >> 16);
-            dstArray[offset++] = (byte)(value >> 8);
-            dstArray[offset] = (byte)(value & 0xFF);
+            if (_islittle)
+            {
+                dstArray[offset++] = (byte)(value & 0xFF);
+                dstArray[offset++] = (byte)(value >> 8);
+                dstArray[offset++] = (byte)(value >> 16);
+                dstArray[offset++] = (byte)(value >> 24);
+            }
+            else
+            {
+                dstArray[offset++] = (byte)(value >> 24);
+                dstArray[offset++] = (byte)(value >> 16);
+                dstArray[offset++] = (byte)(value >> 8);
+                dstArray[offset] = (byte)(value & 0xFF);
+            }
         }
 
         public void GetBytes(UInt16 value, byte[] dstArray, int offset)
         {
-            dstArray[offset] = (byte)(value >> 8);
-            dstArray[offset + 1] = (byte)(value & 0xFF);
+            if (_islittle)
+            {
+                dstArray[offset + 1] = (byte)(value >> 8);
+                dstArray[offset] = (byte)(value & 0xFF);
+            }
+            else
+            {
+                dstArray[offset] = (byte)(value >> 8);
+                dstArray[offset + 1] = (byte)(value & 0xFF);
+            }
         }
 
         public byte[] GetBytes(sbyte value)

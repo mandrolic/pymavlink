@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-#if MF_FRAMEWORK
+#if MF_FRAMEWORK_VERSION_V4_1
 using Microsoft.SPOT;
 #endif
 
@@ -88,17 +88,40 @@ namespace MavLink
        private bool stopThread; // no volatile in uFramework
        private byte[] _leftovers;
 
-        public UInt32 PacketsReceived { get; private set; }
-        public UInt32 BadCrcPacketsReceived { get; private set; }
+       /// <summary>
+       /// Total number of packets successfully received so far
+       /// </summary>
+       public UInt32 PacketsReceived { get; private set; }
 
-        public event PacketDecodedEventHandler PacketDecoded;
+       /// <summary>
+       /// Total number of packets which have been rejected due to a failed crc
+       /// </summary>
+       public UInt32 BadCrcPacketsReceived { get; private set; }
+
+       /// <summary>
+       /// Raised when a packet is successfully decoded and passes CRC
+       /// </summary>
+       public event PacketDecodedEventHandler PacketDecoded;
+
+       /// <summary>
+       /// Raised when a packet does not pass CRC
+       /// </summary>
         public event PacketCRCFailEventHandler PacketFailedCRC;
+
+       /// <summary>
+       /// Raised when a number of bytes are passed over and cannot be used to decode a packet
+       /// </summary>
         public event PacketCRCFailEventHandler BytesUnused;
 
 
         public byte txPacketSequence; // public so it can be manipulated for testing
+
         private readonly Thread _receiveThread;
 
+       /// <summary>
+       /// Create a new Mavlink Link with the given (open) stream
+       /// </summary>
+       /// <param name="stream"></param>
        public Mavlink_Link(Stream stream)
        {
            _ioStream = stream;
@@ -107,11 +130,17 @@ namespace MavLink
        }
 
 
+       /// <summary>
+       /// Start the link receive thread. 
+       /// </summary>
        public void Start()
        {
            _receiveThread.Start();
        }
 
+       /// <summary>
+       /// Request the link receive thread to stop
+       /// </summary>
        public void Stop()
        {
            stopThread = true;
