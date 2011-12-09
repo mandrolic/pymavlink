@@ -245,6 +245,8 @@ namespace MavLink
             while (true)
             {
                 // Hunt for the start char
+                int huntStartPos = (int) i;
+
                 while (i < bytesToProcess.Length && bytesToProcess[i] != 0x55)
                     i++;
 
@@ -254,19 +256,18 @@ namespace MavLink
                     _leftovers = new byte[] { };
                     return;
                 }
-                
-                if (i > 0)
+
+                if (i > huntStartPos)
                 {
                     // if we get here then are some bytes which this code thinks are 
                     // not interesting and would be dumped. For diagnostics purposes,
                     // lets pop these bytes up in an event.
-                    // Todo: this event is not necessary for comms. Surround with some sort of #ifdef
-
-                    var badBytes = new byte[i];
-                    Array.Copy(bytesToProcess, badBytes, (int)i);
-
-                    if (BytesUnused!=null)
+                    if (BytesUnused != null)
+                    {
+                        var badBytes = new byte[i - huntStartPos];
+                        Array.Copy(bytesToProcess, huntStartPos, badBytes, 0, (int)(i - huntStartPos));
                         BytesUnused(this, new PacketCRCFailEventArgs(badBytes));
+                    }
                 }
 
                 // We need at least the minimum length of a packet to process it. 
@@ -274,7 +275,6 @@ namespace MavLink
                 // if we don't have the minimum now, go round again
                 if (bytesToProcess.Length - i < 8)
                 {
-                    // The minimum packet length is 8 bytes for acknowledgement packets without payload
                     _leftovers = new byte[bytesToProcess.Length - i];
                     j = 0;
                     while (i < bytesToProcess.Length)
@@ -338,7 +338,10 @@ namespace MavLink
                     Array.Copy(bytesToProcess, (int) (i - 3), debugArray, 0, debugArray.Length);
 
                     OnPacketDecoded(packet, rxPacketSequence, debugArray);
-                   
+
+                    // clear leftovers, just incase this is the last packet
+                    _leftovers=new byte[] {};
+
                     //  advance i here by j to avoid unecessary hunting
                     // todo: could advance by j + 2 I think?
                     i = i + (uint)(j+2);
