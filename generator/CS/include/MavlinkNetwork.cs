@@ -72,6 +72,7 @@ namespace MavLink
         public MavlinkFactory(bool isLittleEndian)
         {
             MavLink_Deserializer.SetDataIsLittleEndian(isLittleEndian);
+            MavLink_Serializer.SetDataIsLittleEndian(isLittleEndian);
         }
 
         public object Deserialize(byte[] bytes, int offset)

@@ -169,20 +169,7 @@ namespace MavLink
         }
 
 
-        public static sbyte[] FromString(string str)
-        {
-            var encoding = new UTF8Encoding();
-            var bytes =  encoding.GetBytes(str);
-
-            var sbytes = new sbyte[bytes.Length];
-            
-            for (int i = 0; i < bytes.Length; i++)
-                sbytes[i] = (sbyte) bytes[i];
-
-            return sbytes;
-
-            //return someParam.ToCharArray();
-        }
+       
 
         public static string ToString(sbyte[] sbytes)
         {

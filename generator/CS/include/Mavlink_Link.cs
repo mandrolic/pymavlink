@@ -52,15 +52,23 @@ namespace MavLink
    {
        ///<summary>
        ///</summary>
-       public PacketCRCFailEventArgs(byte[] badPacket)
+       public PacketCRCFailEventArgs(byte[] badPacket, int offset)
        {
            BadPacket = badPacket;
+           Offset = offset;
        }
 
        /// <summary>
        /// The bytes that filed the CRC, including the starting character
        /// </summary>
        public byte[] BadPacket;
+
+       /// <summary>
+       /// The offset in bytes where the start of the block begins, e.g 
+       /// 50 would mean the block of badbytes would start 50 bytes ago 
+       /// in the stread. No negative sign is necessary
+       /// </summary>
+       public int Offset;
    }
 
    ///<summary>
@@ -266,7 +274,7 @@ namespace MavLink
                     {
                         var badBytes = new byte[i - huntStartPos];
                         Array.Copy(bytesToProcess, huntStartPos, badBytes, 0, (int)(i - huntStartPos));
-                        BytesUnused(this, new PacketCRCFailEventArgs(badBytes));
+                        BytesUnused(this, new PacketCRCFailEventArgs(badBytes, bytesToProcess.Length - huntStartPos));
                     }
                 }
 
@@ -353,7 +361,7 @@ namespace MavLink
 
                     if (PacketFailedCRC!=null)
                     {
-                        PacketFailedCRC(this, new PacketCRCFailEventArgs(badBytes));
+                        PacketFailedCRC(this, new PacketCRCFailEventArgs(badBytes, (int) (bytesToProcess.Length-i-1)));
                     }
 
                     BadCrcPacketsReceived++;
