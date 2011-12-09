@@ -30,7 +30,8 @@ namespace MavlinkTest
         public void HeartBeatDataRoundTrip()
         {
             var hbBytes = GoodMavlinkHeartbeatPacketData();
-            _dl.packetSequence = 0x98; // hack to sync up with the real packet sequence no
+            
+            _dl.txPacketSequence = 0x98; // hack to sync up with the real packet sequence no
             
             //_dl.AddReadBytes(hbBytes);
             _testStream.RxQueue.Enqueue(hbBytes);
@@ -48,7 +49,7 @@ namespace MavlinkTest
         public void VfrHudPacketDataRoundTrip()
         {
             var packetBytes = VFRHudPacketData();
-            _dl.packetSequence = 0xeb; // hack to sync up with the real packet sequence no
+            _dl.txPacketSequence = 0xeb; // hack to sync up with the real packet sequence no
 
             //_dl.AddReadBytes(hbBytes);
             _testStream.RxQueue.Enqueue(packetBytes);

@@ -21,7 +21,7 @@ namespace MavlinkTest
             dl = new Mock<IDataLink>();
             packetsRxed = new List<MavlinkPacket>();
 
-            _nt = new MavlinkNetwork(dl.Object,new MavlinkFactory());
+            _nt = new MavlinkNetwork(dl.Object);
             _nt.PacketReceived += (sender, e) => packetsRxed.Add(e);
         }
 
@@ -58,8 +58,8 @@ namespace MavlinkTest
         public void VFRHudPacketDataOK()
         {
             var hb = VFRHudPacketData();
-            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb));
-            var fdrPcket = (MAVLink_vfr_hud_message)packetsRxed[0].Message;
+            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb,0,new byte[]{}));
+            var fdrPcket = (Msg_vfr_hud)packetsRxed[0].Message;
             Assert.IsNotNull(fdrPcket);
             Assert.AreEqual(0F,fdrPcket.airspeed);
             Assert.AreEqual(0F,fdrPcket.groundspeed);
@@ -73,7 +73,7 @@ namespace MavlinkTest
         public void DecodedGoodPacketRaisesReceivedEvent()
         {
             var hb = GoodMavlinkHeartbeatPacketData();
-            dl.Raise(d => d.PacketDecoded += null,this, new PacketDecodedEventArgs(hb));
+            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb, 0, new byte[] { }));
             Assert.AreEqual(1, packetsRxed.Count);
         }
 
@@ -81,8 +81,8 @@ namespace MavlinkTest
         public void HeartBeatMessageIsOk()
         {
             var hb = GoodMavlinkHeartbeatPacketData();
-            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb));
-            var hbPcket = (MAVLink_heartbeat_message)packetsRxed[0].Message;
+            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb, 0, new byte[] { }));
+            var hbPcket = (Msg_heartbeat)packetsRxed[0].Message;
             Assert.IsNotNull(hbPcket);
             Assert.AreEqual(3, hbPcket.autopilot);
             Assert.AreEqual(0, hbPcket.type);
@@ -94,7 +94,7 @@ namespace MavlinkTest
         public void SystemIdIsCorrect()
         {
             var hb = GoodMavlinkHeartbeatPacketData();
-            dl.Raise(d => d.PacketDecoded+=null, this,new PacketDecodedEventArgs(hb));
+            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb, 0, new byte[] { }));
             Assert.AreEqual(7, packetsRxed[0].SystemId);
         }
 
@@ -103,7 +103,7 @@ namespace MavlinkTest
         public void ComponentIdIsCorrect()
         {
             var hb = GoodMavlinkHeartbeatPacketData();
-            dl.Raise(d => d.PacketDecoded += null, this,new PacketDecodedEventArgs(hb));
+            dl.Raise(d => d.PacketDecoded += null, this, new PacketDecodedEventArgs(hb, 0, new byte[] { }));
             Assert.AreEqual(1, packetsRxed[0].ComponentId);
         }
     }

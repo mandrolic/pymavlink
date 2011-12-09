@@ -49,6 +49,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataLinkDebugEventTests.cs" />
     <Compile Include="DataLinkSendTests.cs" />
     <Compile Include="DL_NL_Tests.cs" />
     <Compile Include="NetworkTests.cs" />

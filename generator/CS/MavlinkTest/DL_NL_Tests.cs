@@ -12,7 +12,7 @@ namespace MavlinkTest
     public class DataLinkNetworkIntegrationTests
     {
         private MavlinkNetwork _nt;
-        private Mavlink_Link _dl;
+        private Mavlink_Link  _dl;
         private List<MavlinkPacket> _packetsRxed;
         private TestStream _testStream;
 
@@ -22,9 +22,40 @@ namespace MavlinkTest
             _packetsRxed = new List<MavlinkPacket>();
             _testStream = new TestStream();
             _dl = new Mavlink_Link(_testStream);
-            _nt = new MavlinkNetwork(_dl, new MavlinkFactory());
+            _nt = new MavlinkNetwork(_dl);
             _nt.PacketReceived += (sender, e) => _packetsRxed.Add(e);
             _dl.Start();
+        }
+
+
+        public static string ToString(sbyte[] sbytes)
+        {
+            var bytes = new byte[sbytes.Length];
+            int i;
+            for (i = 0; i < bytes.Length && sbytes[i] != '\0'; i++)
+                bytes[i] = (byte)sbytes[i];
+
+            var bytesUntilNull = new byte[i];
+            Array.Copy(bytes, bytesUntilNull, i);
+
+            var encoding = new UTF8Encoding();
+
+            return new string(encoding.GetChars(bytesUntilNull));
+        }
+
+        public static sbyte[] FromString(string str)
+        {
+            var encoding = new UTF8Encoding();
+            var bytes = encoding.GetBytes(str);
+
+            var sbytes = new sbyte[bytes.Length];
+
+            for (int i = 0; i < bytes.Length; i++)
+                sbytes[i] = (sbyte)bytes[i];
+
+            return sbytes;
+
+            //return someParam.ToCharArray();
         }
 
         private static byte[] GoodMavlinkHeartbeatPacketData()
@@ -75,9 +106,9 @@ namespace MavlinkTest
         [TestMethod]
         public void HeartBeatSerialisation()
         {
-            _dl.packetSequence = 0x98; // hack to sync up with the real packet sequence no
+            _dl.txPacketSequence = 0x98; // hack to sync up with the real packet sequence no
 
-            var packet = new MAVLink_heartbeat_message { autopilot=3, type=0, mavlink_version=2 };
+            var packet = new Msg_heartbeat { autopilot = 3, type = 0, mavlink_version  = 2 };
 
 
              _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
@@ -112,9 +143,9 @@ namespace MavlinkTest
         [TestMethod]
         public void VfrPacketRoundTrip()
         {
-            _dl.packetSequence = 0xeb; // hack to sync up with the real packet sequence no
+            _dl.txPacketSequence = 0xeb; // hack to sync up with the real packet sequence no
 
-            var packet = new MAVLink_vfr_hud_message
+            var packet = new Msg_vfr_hud
             {
                 airspeed = 2.2f,
                 groundspeed = 1.1f,
@@ -138,9 +169,9 @@ namespace MavlinkTest
             Assert.AreEqual(7, mavPacket.SystemId);
             Assert.AreEqual(1, mavPacket.ComponentId);
 
-            Assert.IsInstanceOfType(mavPacket.Message, typeof(MAVLink_vfr_hud_message));
+            Assert.IsInstanceOfType(mavPacket.Message, typeof(Msg_vfr_hud));
 
-            var msg = (MAVLink_vfr_hud_message)mavPacket.Message;
+            var msg = (Msg_vfr_hud)mavPacket.Message;
 
             Assert.AreEqual(42, msg.throttle);
 
@@ -150,7 +181,7 @@ namespace MavlinkTest
         [TestMethod]
         public void RoundTripMavLinkScaledPressureMessage()
         {
-            var packet = new MAVLink_scaled_pressure_message
+            var packet = new Msg_scaled_pressure
             {
                 usec = 123456UL,
                 press_abs = 1234.56F,
@@ -170,9 +201,9 @@ namespace MavlinkTest
 
             var mavPacket = _packetsRxed[0];
 
-            Assert.IsInstanceOfType(mavPacket.Message, typeof(MAVLink_scaled_pressure_message));
+            Assert.IsInstanceOfType(mavPacket.Message, typeof(Msg_scaled_pressure));
 
-            var msg =(MAVLink_scaled_pressure_message) mavPacket.Message ;
+            var msg =(Msg_scaled_pressure) mavPacket.Message ;
 
             Assert.AreEqual(123456UL, msg.usec);
             Assert.AreEqual(1234.56F, msg.press_abs);
@@ -185,10 +216,10 @@ namespace MavlinkTest
         [TestMethod]
         public void RoundTripMavLinkStatustextMessage()
         {
-            var packet = new MAVLink_statustext_message
+            var packet = new Msg_statustext
             {
                severity = 1,
-               text = ByteArrayUtil.FromString("hello")
+               text = FromString("hello")
             };
            
             _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
@@ -202,9 +233,9 @@ namespace MavlinkTest
 
             var mavPacket = _packetsRxed[0];
 
-            var msg = (MAVLink_statustext_message)mavPacket.Message;
+            var msg = (Msg_statustext)mavPacket.Message;
 
-            var str = ByteArrayUtil.ToString(msg.text);
+            var str = ToString(msg.text);
             Assert.AreEqual("hello",str);
 
         }
@@ -213,12 +244,12 @@ namespace MavlinkTest
         [TestMethod]
         public void RoundTripMavLinkParamValueMessage()
         {
-            var packet = new MAVLink_param_value_message
+            var packet = new Msg_param_value
             {
                 param_count = 3,
                 param_index = 1,
                 param_value = 4.4F,
-                param_id = ByteArrayUtil.FromString("Some Param")
+                param_id = FromString("Some Param")
             };
 
             _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
@@ -230,11 +261,10 @@ namespace MavlinkTest
 
             var mavPacket = _packetsRxed[0];
 
-            var msg = (MAVLink_param_value_message)mavPacket.Message;
+            var msg = (Msg_param_value)mavPacket.Message;
 
-            var str = ByteArrayUtil.ToString(msg.param_id);
+            var str = ToString(msg.param_id);
             Assert.AreEqual("Some Param", str);
-           
 
             Assert.AreEqual(3, msg.param_count);
             Assert.AreEqual(1, msg.param_index);
