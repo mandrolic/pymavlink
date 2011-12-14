@@ -305,10 +305,12 @@ class mavudp(mavfile):
         s = self.recv()
         if len(s) == 0:
             return None
-        msg = self.mav.decode(s)
-        if msg:
-            self.post_message(msg)
-        return msg
+        msg = self.mav.parse_buffer(s)
+        if msg is not None:
+            for m in msg:
+                self.post_message(m)
+            return msg[0]
+        return None
 
 
 class mavtcp(mavfile):
@@ -451,7 +453,7 @@ def mavlink_connection(device, baud=115200, source_system=255,
         return mavtcp(device[4:], source_system=source_system)
     if device.startswith('udp:'):
         return mavudp(device[4:], input=input, source_system=source_system)
-    if device.find(':') != -1:
+    if device.find(':') != -1 and not device.endswith('log'):
         return mavudp(device, source_system=source_system, input=input)
     if os.path.isfile(device):
         if device.endswith(".elf"):
