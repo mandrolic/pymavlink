@@ -305,10 +305,12 @@ class mavudp(mavfile):
         s = self.recv()
         if len(s) == 0:
             return None
-        msg = self.mav.decode(s)
-        if msg:
-            self.post_message(msg)
-        return msg
+        msg = self.mav.parse_buffer(s)
+        if msg is not None:
+            for m in msg:
+                self.post_message(m)
+            return msg[0]
+        return None
 
 
 class mavtcp(mavfile):
