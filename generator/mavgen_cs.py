@@ -236,9 +236,6 @@ public class MavLink_Serializer
     
 def generate(basename, xml):
     '''generate complete MAVLink CSharp implemenation'''
-    
-   
-    
     filename = basename + '.generated.cs'
 
     msgs = []
@@ -284,6 +281,13 @@ def generate(basename, xml):
     # Compile for the 'Normal' .Net framework
     print("Compiling Assembly for .Net Framework 3.5")
     os.system ("%s %s" % (msbuildCommand, os.path.normpath(dir + "/Mavlink_Net3_5.csproj")))
+    
+    # Compile for Silverlight 3
+    if platform.system() == "Windows":
+        print("Compiling Assembly for Silverlight 3")
+        os.system ("%s %s" % (msbuildCommand, os.path.normpath(dir + "/Mavlink_Silverlight3.csproj")))
+    else:
+        print("Skipping Compiling Assembly for Moonlight 3 - Not yet supported")
     
     # Compile for the .Net Micro Framework
     if platform.system() == "Windows":
