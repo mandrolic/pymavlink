@@ -12,7 +12,7 @@ namespace MavLink
     /// </summary>
     public class MavlinkConnection
     {
-        private readonly MavlinkNetwork _mavlinkNetwork;
+        private readonly Mavlink _mavlink;
         private readonly int _srcSystemId;
         private readonly int _srcComponentId;
 
@@ -43,13 +43,13 @@ namespace MavLink
         /// <summary>
         /// Create mavlink connection with explicit system and component ids
         /// </summary>
-        public MavlinkConnection(MavlinkNetwork mavlinkNetwork, int srcSystemId, int srcComponentId)
+        public MavlinkConnection(Mavlink mavlink, int srcSystemId, int srcComponentId)
         {
-            _mavlinkNetwork = mavlinkNetwork;
+            _mavlink = mavlink;
             _srcSystemId = srcSystemId;
             _srcComponentId = srcComponentId;
 
-            mavlinkNetwork.PacketReceived += mavlinkNetwork_PacketReceived;
+            mavlink.PacketReceived += mavlinkNetwork_PacketReceived;
         }
 
       
@@ -83,7 +83,7 @@ namespace MavLink
                               Message = message
                           };
 
-            _mavlinkNetwork.Send(mvp);
+            _mavlink.Send(mvp);
         }
 
 

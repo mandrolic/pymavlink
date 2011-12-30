@@ -7,94 +7,16 @@ using Microsoft.SPOT;
 
 namespace MavLink
 {
-    /// <summary>
-    /// The array of bytes that was received on the Mavlink link
-    /// </summary>
-    public class PacketDecodedEventArgs : EventArgs
-    {
-        ///<summary>
-        ///</summary>
-        public PacketDecodedEventArgs(byte[] payload, byte sequenceNumber, byte[] rawBytes)
-        {
-            Payload = payload;
-            RawBytes = rawBytes;
-            SequenceNumber = sequenceNumber;
-        }
-
-        /// <summary>
-        /// The packet payload - ie. the packet starting at SystemID and ending at
-        /// the end of the packet data
-        /// </summary>
-        public readonly byte[] Payload;
-
-
-        // At the moment just used 
-        public readonly byte[] RawBytes;
-
-
-        /// <summary>
-        /// The sequence number that the packet had (rolling incremented byte)
-        /// </summary>
-        public byte SequenceNumber;
-    }
-
-
-   ///<summary>
-   /// Handler for an PacketDecoded Event
-   ///</summary>
-   public delegate void PacketDecodedEventHandler(object sender, PacketDecodedEventArgs e);
-
-
-   ///<summary>
-   /// Describes an occurance when a packet fails CRC
-   ///</summary>
-   public class PacketCRCFailEventArgs : EventArgs
-   {
-       ///<summary>
-       ///</summary>
-       public PacketCRCFailEventArgs(byte[] badPacket, int offset)
-       {
-           BadPacket = badPacket;
-           Offset = offset;
-       }
-
-       /// <summary>
-       /// The bytes that filed the CRC, including the starting character
-       /// </summary>
-       public byte[] BadPacket;
-
-       /// <summary>
-       /// The offset in bytes where the start of the block begins, e.g 
-       /// 50 would mean the block of badbytes would start 50 bytes ago 
-       /// in the stread. No negative sign is necessary
-       /// </summary>
-       public int Offset;
-   }
-
-   ///<summary>
-   /// Handler for an PacketFailedCRC Event
-   ///</summary>
-   public delegate void PacketCRCFailEventHandler(object sender, PacketCRCFailEventArgs e);
-
-
-/// <summary>
-/// This can send and receive bytes over a mavlink connection. Escaping, CRC etc are all done here
-/// </summary>
-   public interface IDataLink
-   {
-       event PacketDecodedEventHandler PacketDecoded;
-       void SendPacket(byte[] packetData);
-   }
-
-   ///<summary>
-   /// 
-   ///</summary>
-   public class Mavlink_Link : IDataLink
+   public class Mavlink
     {
        private readonly Stream _ioStream;
        //private volatile bool stopThread;
        private bool stopThread; // no volatile in uFramework
        private byte[] _leftovers;
+
+       private readonly MavlinkFactory _encoder;
+
+       public event PacketReceivedEventHandler PacketReceived;
 
        /// <summary>
        /// Total number of packets successfully received so far
@@ -106,11 +28,7 @@ namespace MavLink
        /// </summary>
        public UInt32 BadCrcPacketsReceived { get; private set; }
 
-       /// <summary>
-       /// Raised when a packet is successfully decoded and passes CRC
-       /// </summary>
-       public event PacketDecodedEventHandler PacketDecoded;
-
+      
        /// <summary>
        /// Raised when a packet does not pass CRC
        /// </summary>
@@ -130,12 +48,16 @@ namespace MavLink
        /// Create a new Mavlink Link with the given (open) stream
        /// </summary>
        /// <param name="stream"></param>
-       public Mavlink_Link(Stream stream)
+       public Mavlink(Stream stream)
        {
            _ioStream = stream;
            _receiveThread = new Thread(ReceiveBytes);
            _leftovers = new byte[] {};
+
+           _encoder = new MavlinkFactory(false);
        }
+
+
 
 
        /// <summary>
@@ -179,11 +101,12 @@ namespace MavLink
 
                 Array.Copy(inbuf, processBuf, numBytesRead);
 
-                AddReadBytes(processBuf);
+                ParseBytes(processBuf);
             }
         }
 
-        public void SendPacket(byte[] packetData)
+       // Send a raw message over the link - add start byte, lenghth, crc and other link layer stuff
+        private void SendPacketLinkLayer(byte[] packetData)
         {
             /*
                * Byte order:
@@ -227,10 +150,40 @@ namespace MavLink
         }
 
 
+        public void Send(MavlinkPacket mavlinkPacket)
+        {
+            var bytes = _encoder.Serialize(mavlinkPacket.Message, mavlinkPacket.SystemId, mavlinkPacket.ComponentId);
+            SendPacketLinkLayer(bytes);
+        }
+
+
+        // Process a raw packet in it's entirety in the given byte array
+        // if deserialization is successful, then the packetdecoded event will be raised
+        private MavlinkPacket ProcessPacketBytes(byte[] packetBytes)
+        {
+            //	 System ID	 1 - 255
+            //	 Component ID	 0 - 255
+            //	 Message ID	 0 - 255
+            //   6 to (n+6)	 Data	 (0 - 255) bytes
+            var packet = new MavlinkPacket
+            {
+                SystemId = packetBytes[0],
+                ComponentId = packetBytes[1],
+                Message = _encoder.Deserialize(packetBytes, 2)
+            };
+
+            if (PacketReceived != null)
+            {
+                PacketReceived(this, packet);
+            }
+
+            return packet;
+        }
+
         /// <summary>
-        /// Process latest bytes from the stream
+        /// Process latest bytes from the stream. Received packets will be raised in the event
         /// </summary>
-        public void AddReadBytes(byte[] newlyReceived)
+        public void ParseBytes(byte[] newlyReceived)
         {
             uint i = 0;
 
@@ -345,7 +298,11 @@ namespace MavLink
                     var debugArray = new byte[payLoadLength + 7];
                     Array.Copy(bytesToProcess, (int) (i - 3), debugArray, 0, debugArray.Length);
 
-                    OnPacketDecoded(packet, rxPacketSequence, debugArray);
+                    //OnPacketDecoded(packet, rxPacketSequence, debugArray);
+
+                    ProcessPacketBytes(packet);
+                    
+                    PacketsReceived++;
 
                     // clear leftovers, just incase this is the last packet
                     _leftovers=new byte[] {};
@@ -367,18 +324,69 @@ namespace MavLink
                     BadCrcPacketsReceived++;
                 }
             }
-        }
+        }  
+    }
 
 
-        private void OnPacketDecoded(byte[] packet, byte sequence, byte[] debugBytes)
-        {
-                if (PacketDecoded != null)
-                {
-                    PacketDecoded(this, new PacketDecodedEventArgs(packet, sequence, debugBytes));
-                }
+   ///<summary>
+   /// Describes an occurance when a packet fails CRC
+   ///</summary>
+   public class PacketCRCFailEventArgs : EventArgs
+   {
+       ///<summary>
+       ///</summary>
+       public PacketCRCFailEventArgs(byte[] badPacket, int offset)
+       {
+           BadPacket = badPacket;
+           Offset = offset;
+       }
 
-                PacketsReceived++;
-        }
-        
+       /// <summary>
+       /// The bytes that filed the CRC, including the starting character
+       /// </summary>
+       public byte[] BadPacket;
+
+       /// <summary>
+       /// The offset in bytes where the start of the block begins, e.g 
+       /// 50 would mean the block of badbytes would start 50 bytes ago 
+       /// in the stread. No negative sign is necessary
+       /// </summary>
+       public int Offset;
+   }
+
+   ///<summary>
+   /// Handler for an PacketFailedCRC Event
+   ///</summary>
+   public delegate void PacketCRCFailEventHandler(object sender, PacketCRCFailEventArgs e);
+
+
+   public delegate void PacketReceivedEventHandler(object sender, MavlinkPacket e);
+
+
+    ///<summary>
+    /// Represents a Mavlink message - both the message object itself
+    /// and the identified sending party
+    ///</summary>
+    public class MavlinkPacket
+    {
+        /// <summary>
+        /// The sender's system ID
+        /// </summary>
+        public int SystemId;
+
+        /// <summary>
+        /// The sender's component ID
+        /// </summary>
+        public int ComponentId;
+
+        /// <summary>
+        /// Time of receipt
+        /// </summary>
+        public DateTime TimeStamp;
+
+        /// <summary>
+        /// Object which is the mavlink message
+        /// </summary>
+        public object Message;
     }
 }

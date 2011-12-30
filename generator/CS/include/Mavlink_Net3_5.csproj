@@ -54,7 +54,11 @@
     <Compile Include="mavlink_messages.generated.cs" />
     <Compile Include="mavlink_messages_codec.generated.cs" />
     <Compile Include="MavlinkNetwork.cs" />
+    <Compile Include="MavUtil\MavlinkUtil.cs" />
+    <Compile Include="MavUtil\Mavlogfile.cs" />
+    <Compile Include="MavUtil\Mavserial.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
   </PropertyGroup>

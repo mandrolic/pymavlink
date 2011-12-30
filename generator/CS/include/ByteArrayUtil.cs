@@ -185,5 +185,14 @@ namespace MavLink
 
             return new string(encoding.GetChars(bytesUntilNull));
         }
+
+        public static string ToString(byte[] bs)
+        {
+            int i;
+            for (i = 0; i < bs.Length && bs[i] != '\0'; i++);
+            var bytesUntilNull = new byte[i];
+            Array.Copy(bs, bytesUntilNull, i);
+            return new string(new UTF8Encoding().GetChars(bytesUntilNull));
+        }
     }
 }
