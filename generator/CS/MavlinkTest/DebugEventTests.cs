@@ -5,9 +5,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace MavlinkTest
 {
     [TestClass]
-    public class DataLinkDebugEventTests
+    public class DebugEventTests
     {
-        private Mavlink_Link _dl;
+        private Mavlink _dut;
         private List<byte[]> _decodedPackets;
         private TestStream _testStream;
         private List<PacketCRCFailEventArgs> unusedEvents;
@@ -35,9 +35,9 @@ namespace MavlinkTest
         {
             failCrcEvents = new List<PacketCRCFailEventArgs>();
             unusedEvents=new List<PacketCRCFailEventArgs>();
-            _dl = new Mavlink_Link(null);
-            _dl.BytesUnused += _dl_BytesUnused;
-            _dl.PacketFailedCRC += new PacketCRCFailEventHandler(_dl_PacketFailedCRC);
+            _dut = new Mavlink(null);
+            _dut.BytesUnused += _dl_BytesUnused;
+            _dut.PacketFailedCRC += _dl_PacketFailedCRC;
         }
 
         void _dl_PacketFailedCRC(object sender, PacketCRCFailEventArgs e)
@@ -48,9 +48,9 @@ namespace MavlinkTest
         [TestMethod]
         public void UnusedBytesBetweenPacketsWorks()
         {
-            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
-            _dl.AddReadBytes(new byte[] {1,2,3,4,5});
-            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            _dut.ParseBytes(GoodMavlinkHeartbeatPacketData());
+            _dut.ParseBytes(new byte[] { 1, 2, 3, 4, 5 });
+            _dut.ParseBytes(GoodMavlinkHeartbeatPacketData());
 
         }
 
@@ -59,8 +59,8 @@ namespace MavlinkTest
         {
             var goo = GoodMavlinkHeartbeatPacketData();
             goo[8] = 42;
-            _dl.AddReadBytes(goo);
-            _dl.AddReadBytes(GoodMavlinkHeartbeatPacketData());
+            _dut.ParseBytes(goo);
+            _dut.ParseBytes(GoodMavlinkHeartbeatPacketData());
 
             Assert.AreEqual(1, failCrcEvents.Count);
             Assert.AreEqual(goo.Length,failCrcEvents[0].BadPacket.Length);

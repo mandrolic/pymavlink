@@ -11,8 +11,7 @@ namespace MavlinkTest
     [TestClass]
     public class DataLinkNetworkIntegrationTests
     {
-        private MavlinkNetwork _nt;
-        private Mavlink_Link  _dl;
+        private Mavlink _mav;
         private List<MavlinkPacket> _packetsRxed;
         private TestStream _testStream;
 
@@ -21,10 +20,9 @@ namespace MavlinkTest
         {
             _packetsRxed = new List<MavlinkPacket>();
             _testStream = new TestStream();
-            _dl = new Mavlink_Link(_testStream);
-            _nt = new MavlinkNetwork(_dl);
-            _nt.PacketReceived += (sender, e) => _packetsRxed.Add(e);
-            _dl.Start();
+            _mav = new Mavlink(_testStream);
+            _mav.PacketReceived += (sender, e) => _packetsRxed.Add(e);
+            _mav.Start();
         }
 
 
@@ -106,12 +104,12 @@ namespace MavlinkTest
         [TestMethod]
         public void HeartBeatSerialisation()
         {
-            _dl.txPacketSequence = 0x98; // hack to sync up with the real packet sequence no
+            _mav.txPacketSequence = 0x98; // hack to sync up with the real packet sequence no
 
             var packet = new Msg_heartbeat { autopilot = 3, type = 0, mavlink_version  = 2 };
 
 
-             _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
+             _mav.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
 
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
 
@@ -143,7 +141,7 @@ namespace MavlinkTest
         [TestMethod]
         public void VfrPacketRoundTrip()
         {
-            _dl.txPacketSequence = 0xeb; // hack to sync up with the real packet sequence no
+            _mav.txPacketSequence = 0xeb; // hack to sync up with the real packet sequence no
 
             var packet = new Msg_vfr_hud
             {
@@ -155,7 +153,7 @@ namespace MavlinkTest
                 climb = 4.4f
             };
            
-            _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
+            _mav.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
 
             //_dl.AddReadBytes(dlbytes);
@@ -189,7 +187,7 @@ namespace MavlinkTest
                 temperature = -4
             };
            
-            _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
+            _mav.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
 
             //_dl.AddReadBytes(dlbytes);
@@ -222,7 +220,7 @@ namespace MavlinkTest
                text = FromString("hello")
             };
            
-            _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
+            _mav.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
 
             _testStream.RxQueue.Enqueue(dlbytes);
@@ -252,7 +250,7 @@ namespace MavlinkTest
                 param_id = FromString("Some Param")
             };
 
-            _nt.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
+            _mav.Send(new MavlinkPacket { SystemId = 7, ComponentId = 1, Message = packet });
             var dlbytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
             _testStream.RxQueue.Enqueue(dlbytes);
             Thread.Sleep(100);

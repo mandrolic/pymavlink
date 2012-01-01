@@ -53,7 +53,6 @@ namespace MavLink
            _ioStream = stream;
            _receiveThread = new Thread(ReceiveBytes);
            _leftovers = new byte[] {};
-
            _encoder = new MavlinkFactory(false);
        }
 
@@ -159,7 +158,7 @@ namespace MavLink
 
         // Process a raw packet in it's entirety in the given byte array
         // if deserialization is successful, then the packetdecoded event will be raised
-        private MavlinkPacket ProcessPacketBytes(byte[] packetBytes)
+        private MavlinkPacket ProcessPacketBytes(byte[] packetBytes, byte rxPacketSequence)
         {
             //	 System ID	 1 - 255
             //	 Component ID	 0 - 255
@@ -169,6 +168,7 @@ namespace MavLink
             {
                 SystemId = packetBytes[0],
                 ComponentId = packetBytes[1],
+                SequenceNumber = rxPacketSequence,
                 Message = _encoder.Deserialize(packetBytes, 2)
             };
 
@@ -300,7 +300,7 @@ namespace MavLink
 
                     //OnPacketDecoded(packet, rxPacketSequence, debugArray);
 
-                    ProcessPacketBytes(packet);
+                    ProcessPacketBytes(packet, rxPacketSequence);
                     
                     PacketsReceived++;
 
@@ -378,6 +378,12 @@ namespace MavLink
         /// The sender's component ID
         /// </summary>
         public int ComponentId;
+
+        /// <summary>
+        /// The sequence number received for this packet
+        /// </summary>
+        public byte SequenceNumber;
+
 
         /// <summary>
         /// Time of receipt

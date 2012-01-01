@@ -11,18 +11,18 @@ namespace MavlinkTest
     [TestClass]
     public class DataLinkSendTests
     {
-        private Mavlink_Link _dl;
-        private List<byte[]> _decodedPackets;
+        private Mavlink _dut;
+        private List<MavlinkPacket> _decodedPackets;
         private TestStream _testStream;
 
         [TestInitialize]
         public void Setup()
         {
             _testStream = new TestStream();
-            _dl = new Mavlink_Link(_testStream);
-            _dl.PacketDecoded += (sender, e) => _decodedPackets.Add(e.Payload);
-            _decodedPackets = new List<byte[]>();
-            _dl.Start();
+            _dut = new Mavlink(_testStream);
+            _dut.PacketReceived  += (sender, e) => _decodedPackets.Add(e);
+            _decodedPackets = new List<MavlinkPacket>();
+            _dut.Start();
         }
 
 
@@ -31,7 +31,7 @@ namespace MavlinkTest
         {
             var hbBytes = GoodMavlinkHeartbeatPacketData();
             
-            _dl.txPacketSequence = 0x98; // hack to sync up with the real packet sequence no
+            _dut.txPacketSequence = 0x98; // hack to sync up with the real packet sequence no
             
             //_dl.AddReadBytes(hbBytes);
             _testStream.RxQueue.Enqueue(hbBytes);
@@ -40,7 +40,9 @@ namespace MavlinkTest
 
             var netPacket =  _decodedPackets[0];
             //var sendBytes = _dl.SendPacket(netPacket);
-            _dl.SendPacket(netPacket);
+            
+            _dut.Send(netPacket);
+            
             var sendBytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
             CollectionAssert.AreEqual(hbBytes, sendBytes);
         }
@@ -49,7 +51,7 @@ namespace MavlinkTest
         public void VfrHudPacketDataRoundTrip()
         {
             var packetBytes = VFRHudPacketData();
-            _dl.txPacketSequence = 0xeb; // hack to sync up with the real packet sequence no
+            _dut.txPacketSequence = 0xeb; // hack to sync up with the real packet sequence no
 
             //_dl.AddReadBytes(hbBytes);
             _testStream.RxQueue.Enqueue(packetBytes);
@@ -57,7 +59,7 @@ namespace MavlinkTest
             
             var netPacket = _decodedPackets[0];
             //var sendBytes = _dl.SendPacket(netPacket);
-            _dl.SendPacket(netPacket);
+            _dut.Send(netPacket);
             var sendBytes = _testStream.SentBytes.SelectMany(b => b).ToArray();
             CollectionAssert.AreEqual(packetBytes, sendBytes);
         }
