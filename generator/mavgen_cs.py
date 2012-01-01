@@ -268,8 +268,6 @@ def generate(basename, xml):
     print("Copying DLL project and files")
     src = os.path.normpath("CS/include/")
     
-    print "Command = " + "copy %s %s" % (src, os.path.normpath(dir))
-    
     # Some build commands depend on the platform - eg MS .NET Windows Vs Mono on Linux
     if platform.system() == "Windows":
         os.system ("copy %s %s" % (src, os.path.normpath(dir)))

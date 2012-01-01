@@ -11,8 +11,8 @@ namespace MavUtil
     {
         private readonly bool _noTimeStamps;
 
-        public Mavlogfile(string fileName, byte sourceSystem = (byte)0xFF, bool noTimeStamps = false)
-            : base(sourceSystem)
+        public Mavlogfile(string fileName, byte sourceSystem, byte sourceComponentId, bool noTimeStamps)
+            : base(sourceSystem, sourceComponentId)
         {
             _noTimeStamps = noTimeStamps;
             //   if planner_format is None and self.filename.endswith(".tlog"):
@@ -22,8 +22,8 @@ namespace MavUtil
         }
 
 
-        public Mavlogfile(Stream logfiletream, byte sourceSystem = (byte)0xFF, bool noTimeStamps = false)
-            : base(sourceSystem)
+        public Mavlogfile(Stream logfiletream, byte sourceSystem, byte sourceComponentId, bool noTimeStamps)
+            : base(sourceSystem, sourceComponentId)
         {
             _noTimeStamps = noTimeStamps;
             //   if planner_format is None and self.filename.endswith(".tlog"):

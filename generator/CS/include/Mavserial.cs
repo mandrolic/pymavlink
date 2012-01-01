@@ -10,7 +10,7 @@ namespace MavUtil
         private int _baud;
         private bool _autoconnect;
 
-        public Mavserial(int baud = 115200, bool autoreconnect = false, byte sourceSystem = (byte)0xFF, byte sourceComponent= (byte)0xFF)
+        public Mavserial(int baud, bool autoreconnect, byte sourceSystem, byte sourceComponent)
             : base(sourceSystem, sourceComponent)
         {
             _baud = baud;

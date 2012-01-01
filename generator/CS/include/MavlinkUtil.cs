@@ -36,7 +36,7 @@ namespace MavUtil
         protected Stream _stream;
         private MavlinkPacket _latestPacket;
 
-        public Mavfile(byte sourceSystem = (byte)0xFF, byte sourceComponentId = (byte)0xFF)
+        public Mavfile(byte sourceSystem, byte sourceComponentId)
         {
             _sourceSystemId = sourceSystem;
             _sourceComponentId = sourceComponentId;
